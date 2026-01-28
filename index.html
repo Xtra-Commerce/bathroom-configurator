@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
+  <title>Bathroom Configurator - Plan Your Bathroom Renovation</title>
+  <meta name="title" content="Bathroom Configurator - Plan Your Bathroom Renovation">
+  <meta name="description" content="Free tool to help you plan your bathroom renovation. Compare different basin, toilet, shower, and tile options. Track costs and create professional PDFs to share with contractors. Perfect for homeowners doing DIY bathroom remodeling.">
+  <meta name="keywords" content="plan bathroom renovation, compare bathroom fixtures, bathroom remodel cost calculator, bathroom planning tool, compare basin prices, compare toilet options, shower configurator, tile calculator, bathroom design tool, DIY bathroom, renovation budget tracker">
+  <meta name="author" content="Pooja Sengupta">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://xtra-commerce.github.io/bathroom-configurator/">
+  <meta property="og:title" content="Free Bathroom Renovation Planning Tool">
+  <meta property="og:description" content="Compare bathroom fixtures, track renovation costs, and create professional PDFs. Free tool for homeowners planning bathroom remodels.">
+  <meta property="og:image" content="https://xtra-commerce.github.io/bathroom-configurator/preview.png">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://xtra-commerce.github.io/bathroom-configurator/">
+  <meta property="twitter:title" content="Free Bathroom Renovation Planning Tool">
+  <meta property="twitter:description" content="Compare bathroom fixtures, track costs, and plan your renovation. Free tool for DIY homeowners.">
+  <meta property="twitter:image" content="https://xtra-commerce.github.io/bathroom-configurator/preview.png">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://xtra-commerce.github.io/bathroom-configurator/">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚿</text></svg>">
+  
+  <!-- Schema.org markup for Google -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Bathroom Configurator",
+    "description": "Free tool to organize, compare, and decide on bathroom fittings for renovation projects",
+    "url": "https://xtra-commerce.github.io/bathroom-configurator/",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript. Modern browser recommended.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Pooja Sengupta",
+      "url": "https://www.linkedin.com/in/poojasengupta/"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "Xtra-Commerce",
+      "url": "https://github.com/Xtra-Commerce"
+    }
+  }
+  </script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    .loading.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loading-content {
+      text-align: center;
+      color: white;
+    }
+    
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0;
+    }
+    
+    header {
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .logo {
+      font-size: 40px;
+    }
+    
+    .title-section h1 {
+      font-size: 28px;
+      color: #1f2937;
+      font-weight: 800;
+      margin: 0;
+    }
+    
+    .title-section p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    
+    .app-container {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      background: white;
+    }
+    
+    .app-frame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: white;
+      min-height: calc(100vh - 80px);
+    }
+    
+    footer {
+      background: #1f2937;
+      color: white;
+      padding: 40px 20px 25px;
+      text-align: center;
+    }
+    
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .footer-main {
+      margin-bottom: 25px;
+    }
+    
+    .footer-tagline {
+      font-size: 16px;
+      color: #d1d5db;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    
+    .footer-links a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .footer-links a:hover {
+      color: #60a5fa;
+      text-decoration: underline;
+    }
+    
+    .footer-credits {
+      font-size: 14px;
+      color: #9ca3af;
+      margin-bottom: 20px;
+    }
+    
+    .footer-credits a {
+      color: #60a5fa;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .footer-credits a:hover {
+      text-decoration: underline;
+    }
+    
+    .footer-copyright {
+      font-size: 12px;
+      color: #6b7280;
+      padding-top: 20px;
+      border-top: 1px solid #374151;
+    }
+    
+    @media (max-width: 768px) {
+      .header-content {
+        padding: 15px 20px;
+      }
+      
+      .logo-section {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+      }
+      
+      .logo {
+        font-size: 35px;
+      }
+      
+      .title-section h1 {
+        font-size: 22px;
+      }
+      
+      .title-section p {
+        font-size: 13px;
+      }
+      
+      .footer-links {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+    
+    /* SEO Content - Hidden but crawlable */
+    .seo-content {
+      position: absolute;
+      left: -10000px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading" id="loading">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <h2 style="font-size: 24px; margin-bottom: 10px;">Loading Bathroom Configurator...</h2>
+      <p style="opacity: 0.9;">Please wait a moment</p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo">🚿</div>
+        <div class="title-section">
+          <h1>Bathroom Configurator</h1>
+          <p>Plan your bathroom renovation with ease</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application -->
+  <div class="app-container">
+    <iframe 
+      id="app-frame"
+      class="app-frame"
+      src="about:blank"
+      title="Bathroom Configurator Application"
+      loading="eager"
+      importance="high"
+    ></iframe>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-main">
+        <p class="footer-tagline">
+          "Born from the chaos of DIY renovation – May your bathroom projects be less stressful than mine! ✨"
+        </p>
+      </div>
+      
+      <div class="footer-links">
+        <a href="https://www.linkedin.com/in/poojasengupta/" target="_blank" rel="noopener">
+          💼 Connect on LinkedIn
+        </a>
+        <a href="https://buymeacoffee.com/poojasengupta" target="_blank" rel="noopener">
+          ☕ Support This Project
+        </a>
+        <a href="mailto:feedback@xtra-commerce.github.io?subject=Bathroom%20Configurator%20Feedback">
+          💬 Send Feedback
+        </a>
+      </div>
+      
+      <div class="footer-credits">
+        Created with ❤️ by 
+        <a href="https://www.linkedin.com/in/poojasengupta/" target="_blank" rel="noopener">Pooja Sengupta</a>
+        with Claude AI
+      </div>
+      
+      <div class="footer-copyright">
+        © 2026 • Free & Open Source
+      </div>
+    </div>
+  </footer>
+
+  <!-- SEO Content for Search Engines -->
+  <div class="seo-content">
+    <h1>Free Bathroom Renovation Planning Tool</h1>
+    
+    <h2>How to Plan a Bathroom Renovation</h2>
+    <p>
+      Planning a bathroom renovation can be overwhelming. How do you compare different 
+      basin options? Which toilet should you choose? How much will shower fixtures cost? 
+      This free tool helps you organize everything in one place, compare prices, and 
+      make informed decisions for your bathroom remodel.
+    </p>
+    
+    <h2>What You Can Do</h2>
+    <p>
+      Compare bathroom fixtures like basins, toilets, showers, faucets, and tiles. 
+      Track your renovation budget in real-time. Create multiple design options 
+      (budget vs premium) to see what fits your needs. Export professional PDFs 
+      to share with contractors or family members. All completely free.
+    </p>
+    
+    <h3>Perfect for Homeowners Who Want To:</h3>
+    <ul>
+      <li>Compare different bathroom basin designs and prices</li>
+      <li>Choose between budget and premium toilet options</li>
+      <li>Calculate total bathroom renovation costs</li>
+      <li>Compare shower heads, faucets, and fixtures</li>
+      <li>Select tiles and see total coverage costs</li>
+      <li>Track bathroom accessories and fittings</li>
+      <li>Create professional renovation proposals</li>
+      <li>Share plans with contractors for quotes</li>
+    </ul>
+    
+    <h3>Common Questions This Tool Helps Answer:</h3>
+    <ul>
+      <li>How much will my bathroom renovation cost?</li>
+      <li>What's the difference between budget and premium bathroom fixtures?</li>
+      <li>Which basin style fits my bathroom design?</li>
+      <li>How do I compare shower options?</li>
+      <li>What tiles should I choose for my bathroom?</li>
+      <li>How can I track all my bathroom renovation expenses?</li>
+      <li>What fixtures do I need for a complete bathroom?</li>
+    </ul>
+    
+    <h2>For DIY Bathroom Renovations</h2>
+    <p>
+      If you're doing a DIY bathroom remodel, this tool helps you stay organized. 
+      Add all the products you're considering - basins from different brands, 
+      various toilet models, shower fixtures, tiles, and accessories. Create 
+      different scenarios to see what combination works best for your budget 
+      and design preferences.
+    </p>
+    
+    <h2>Multi-Currency Support</h2>
+    <p>
+      Track costs in your local currency - INR (Indian Rupees), USD (US Dollars), 
+      EUR (Euros), GBP (British Pounds), AED (UAE Dirhams), and more. Perfect 
+      for international renovations or comparing products from different regions.
+    </p>
+    
+    <h2>How It Works</h2>
+    <ol>
+      <li>Add bathroom products you're considering - basins, toilets, showers, tiles, faucets</li>
+      <li>Enter prices from different suppliers or stores</li>
+      <li>Upload product images to visualize your choices</li>
+      <li>Create different bathroom configurations (Option A vs Option B)</li>
+      <li>Compare total costs side-by-side</li>
+      <li>Export professional PDFs to share with contractors or get quotes</li>
+      <li>Make informed decisions based on real data</li>
+    </ol>
+    
+    <h2>No Sign-Up Required</h2>
+    <p>
+      Start planning immediately. No registration, no email required, no subscriptions. 
+      Your data stays in your browser. Export your work as PDF or backup files 
+      whenever you need. Completely private and secure.
+    </p>
+  </div>
+
+  <!-- Load the artifact -->
+  <script>
+    // Artifact URL - Replace this with your published artifact URL from claude.ai
+    const ARTIFACT_URL = 'PLACEHOLDER_ARTIFACT_URL';
+    
+    // Initialize the app
+    window.addEventListener('DOMContentLoaded', function() {
+      const iframe = document.getElementById('app-frame');
+      const loading = document.getElementById('loading');
+      
+      // For now, show a message that you need to add the artifact URL
+      // Once you publish the artifact on claude.ai, you'll get a shareable URL
+      
+      // Temporary: Load a basic version
+      iframe.srcdoc = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              margin: 0;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              background: #f9fafb;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              padding: 20px;
+            }
+            .setup-container {
+              max-width: 600px;
+              background: white;
+              padding: 40px;
+              border-radius: 16px;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+              text-align: center;
+            }
+            h1 {
+              color: #1f2937;
+              margin-bottom: 20px;
+              font-size: 28px;
+            }
+            p {
+              color: #6b7280;
+              line-height: 1.6;
+              margin-bottom: 15px;
+            }
+            .code-block {
+              background: #f3f4f6;
+              padding: 20px;
+              border-radius: 8px;
+              font-family: 'Courier New', monospace;
+              font-size: 14px;
+              text-align: left;
+              margin: 20px 0;
+              overflow-x: auto;
+            }
+            .step {
+              background: #eff6ff;
+              padding: 15px;
+              border-radius: 8px;
+              margin: 15px 0;
+              border-left: 4px solid #3b82f6;
+              text-align: left;
+            }
+            .step strong {
+              color: #1e40af;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="setup-container">
+            <h1>🚿 Almost Ready!</h1>
+            <p>Your Bathroom Configurator is being prepared for GitHub Pages.</p>
+            
+            <div class="step">
+              <strong>Step 1:</strong> This landing page is ready!
+            </div>
+            
+            <div class="step">
+              <strong>Step 2:</strong> Upload the full application artifact
+            </div>
+            
+            <div class="step">
+              <strong>Step 3:</strong> Update the ARTIFACT_URL in this file
+            </div>
+            
+            <p style="margin-top: 30px; color: #059669; font-weight: 600;">
+              ✅ SEO Optimized<br>
+              ✅ StatCounter Integrated<br>
+              ✅ Buy Me a Coffee Added<br>
+              ✅ Mobile Responsive
+            </p>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #9ca3af;">
+              Check the documentation for next steps!
+            </p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      // Hide loading after iframe loads
+      iframe.onload = function() {
+        setTimeout(function() {
+          loading.classList.add('hide');
+        }, 500);
+      };
+    });
+  </script>
+
+  <!-- StatCounter Code -->
+  <script type="text/javascript">
+  var sc_project=13201711; 
+  var sc_invisible=1; 
+  var sc_security="a9cc5825"; 
+  </script>
+  <script type="text/javascript"
+  src="https://www.statcounter.com/counter/counter.js" async></script>
+  <noscript><div class="statcounter"><a title="Web Analytics"
+  href="https://statcounter.com/" target="_blank"><img class="statcounter"
+  src="https://c.statcounter.com/13201711/0/a9cc5825/1/"
+  alt="Web Analytics"
+  referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+  <!-- End of Statcounter Code -->
+
+</body>
+</html>
