@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
-import { Upload, Download, AlertCircle, Save, RefreshCw } from 'lucide-react';
+const { useState, useEffect, useMemo } = React;
+
+// Simple icon components to replace lucide-react
+const Upload = () => <span>📤</span>;
+const Download = () => <span>📥</span>;
+const AlertCircle = () => <span>⚠️</span>;
+const Save = () => <span>💾</span>;
+const RefreshCw = () => <span>🔄</span>;
 
 // We'll load jsPDF dynamically when needed
 const loadJsPDF = async () => {
