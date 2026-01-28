@@ -27,13 +27,16 @@
         const compiled = Babel.transform(jsxCode, { presets: ['react'] }).code;
         eval(compiled);
       } catch (error) {
-        console.error('Compilation error:', error);
+        console.error('Error:', error);
         document.getElementById('root').innerHTML = 
-          '<div style="padding:40px;max-width:800px;margin:0 auto;">' +
-          '<h1 style="color:red;font-size:24px;margin-bottom:20px;">App Loading Error</h1>' +
-          '<p style="font-family:monospace;background:#f5f5f5;padding:15px;border-radius:5px;">' + 
+          '<div style="padding:40px;max-width:900px;margin:0 auto;font-family:sans-serif;">' +
+          '<h1 style="color:#dc2626;font-size:28px;margin-bottom:20px;">⚠️ App Loading Error</h1>' +
+          '<div style="background:#fef2f2;border:2px solid #fecaca;border-radius:8px;padding:20px;margin-bottom:20px;">' +
+          '<pre style="margin:0;white-space:pre-wrap;word-wrap:break-word;font-size:14px;">' + 
           error.message + 
-          '</p></div>';
+          '</pre></div>' +
+          '<p style="color:#666;">Please report this error with the message above.</p>' +
+          '</div>';
       }
     }
     
@@ -205,28 +208,6 @@ const App = () => {
 
 
 
-  // Rest of the helper functions...
-  const saveToStorage = (key, data) => {
-    try {
-      debug(`Saving to storage: ${key}`);
-      const serialized = JSON.stringify(data);
-      debug(`Data size: ${(serialized.length / 1024).toFixed(2)} KB`);
-      return true; // Simulated success
-    } catch (e) {
-      debug(`⚠️ Storage error: ${e.message}`);
-      setStorageAvailable(false);
-      return false;
-    }
-  };
-
-  const loadFromStorage = (key) => {
-    try {
-      return null; // Simulated - no actual storage
-    } catch (e) {
-      debug(`⚠️ Load error: ${e.message}`);
-      return null;
-    }
-  };
 
   React.useEffect(() => {
     debug('App initialized');
@@ -1535,7 +1516,7 @@ const App = () => {
                 </button>
               </div>
             ) : (
-
+              <>
                 {selectedBathroom.options.map((option, optIdx) => (
                   <div key={option.id} className="bg-white rounded-lg shadow-lg p-6">
                     <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
@@ -1767,7 +1748,7 @@ const App = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">Bathroom Comparison Summary</h2>
                 <button
-                  onClick={() => (() => alert("PDF export coming soon"))('Summary', 'summary-content')}
+                  onClick={() => exportToPDF('Summary', 'summary-content')}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition shadow-lg flex items-center gap-2"
                 >
                   <Download className="w-5 h-5" /> Export PDF
@@ -1858,7 +1839,7 @@ const App = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">Project Overview</h2>
                 <button
-                  onClick={() => (() => alert("PDF export coming soon"))('Overview', 'overview-content')}
+                  onClick={() => exportToPDF('Overview', 'overview-content')}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition shadow-lg flex items-center gap-2"
                 >
                   <Download className="w-5 h-5" /> Export PDF
@@ -1958,7 +1939,7 @@ const App = () => {
                     <Download className="w-5 h-5" /> Export Excel
                   </button>
                   <button
-                    onClick={() => (() => alert("PDF export coming soon"))('Procurement', 'procurement-content')}
+                    onClick={() => exportToPDF('Procurement', 'procurement-content')}
                     className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition shadow-lg flex items-center gap-2"
                   >
                     <Download className="w-5 h-5" /> Export PDF
