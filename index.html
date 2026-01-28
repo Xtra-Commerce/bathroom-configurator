@@ -6,10 +6,23 @@
   <title>Bathroom Configurator - Free Bathroom Planning Tool</title>
   <meta name="description" content="Free bathroom configurator tool. Compare options, manage procurement, track costs.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚿</text></svg>">
+  
+  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Suppress the CDN warning
+    const originalWarn = console.warn;
+    console.warn = function(...args) {
+      if (args[0]?.includes?.('cdn.tailwindcss.com')) return;
+      originalWarn.apply(console, args);
+    };
+  </script>
+  
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- StatCounter Code -->
   <script type="text/javascript">
   var sc_project=13201711; 
   var sc_invisible=1; 
@@ -176,6 +189,61 @@ const App = () => {
     }
   };
 
+  const getExportStyles = () => `
+    .container { max-width: 100%; }
+    h1, h2, h3, h4 { margin-top: 15px; margin-bottom: 10px; color: #1f2937; }
+    h1 { font-size: 24px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+    h2 { font-size: 20px; color: #2563eb; }
+    h3 { font-size: 18px; color: #4b5563; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+    th { background-color: #f3f4f6; font-weight: bold; color: #111827; }
+    tr:nth-child(even) { background-color: #f9fafb; }
+    img { max-width: 100px; height: auto; }
+    .grid { display: grid; gap: 15px; }
+    .card { border: 1px solid #e5e7eb; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    .zone-header { background-color: #eff6ff; padding: 10px; margin: 20px 0 10px 0; border-left: 4px solid #3b82f6; }
+    .price-row { font-weight: bold; background-color: #fef3c7 !important; }
+    button, .no-print { display: none !important; }
+  `;
+
+  // Rest of the helper functions...
+  const saveToStorage = (key, data) => {
+    try {
+      debug(`Saving to storage: ${key}`);
+      const serialized = JSON.stringify(data);
+      debug(`Data size: ${(serialized.length / 1024).toFixed(2)} KB`);
+      return true; // Simulated success
+    } catch (e) {
+      debug(`⚠️ Storage error: ${e.message}`);
+      setStorageAvailable(false);
+      return false;
+    }
+  };
+
+  const loadFromStorage = (key) => {
+    try {
+      return null; // Simulated - no actual storage
+    } catch (e) {
+      debug(`⚠️ Load error: ${e.message}`);
+      return null;
+    }
+  };
+
+  React.useEffect(() => {
+    debug('App initialized');
+    
+    // Check if first visit
+    const hasVisited = loadFromStorage('hasVisited');
+    if (!hasVisited) {
+      setShowIntro(true);
+      saveToStorage('hasVisited', true);
+    }
+    
+    const storedItems = loadFromStorage('bathroomItems');
+    const storedBathrooms = loadFromStorage('bathrooms');
+    const storedCurrency = loadFromStorage('currency');
+    const storedCurrencyCode = loadFromStorage('currencyCode');
   const exportToPDF = (viewName, contentId) => {
     debug(`Exporting ${viewName} to PDF...`);
     
@@ -256,61 +324,6 @@ const App = () => {
     setTimeout(() => setNotification(null), 5000);
   };
 
-  const getExportStyles = () => `
-    .container { max-width: 100%; }
-    h1, h2, h3, h4 { margin-top: 15px; margin-bottom: 10px; color: #1f2937; }
-    h1 { font-size: 24px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
-    h2 { font-size: 20px; color: #2563eb; }
-    h3 { font-size: 18px; color: #4b5563; }
-    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-    th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
-    th { background-color: #f3f4f6; font-weight: bold; color: #111827; }
-    tr:nth-child(even) { background-color: #f9fafb; }
-    img { max-width: 100px; height: auto; }
-    .grid { display: grid; gap: 15px; }
-    .card { border: 1px solid #e5e7eb; padding: 15px; margin: 10px 0; border-radius: 8px; }
-    .zone-header { background-color: #eff6ff; padding: 10px; margin: 20px 0 10px 0; border-left: 4px solid #3b82f6; }
-    .price-row { font-weight: bold; background-color: #fef3c7 !important; }
-    button, .no-print { display: none !important; }
-  `;
-
-  // Rest of the helper functions...
-  const saveToStorage = (key, data) => {
-    try {
-      debug(`Saving to storage: ${key}`);
-      const serialized = JSON.stringify(data);
-      debug(`Data size: ${(serialized.length / 1024).toFixed(2)} KB`);
-      return true; // Simulated success
-    } catch (e) {
-      debug(`⚠️ Storage error: ${e.message}`);
-      setStorageAvailable(false);
-      return false;
-    }
-  };
-
-  const loadFromStorage = (key) => {
-    try {
-      return null; // Simulated - no actual storage
-    } catch (e) {
-      debug(`⚠️ Load error: ${e.message}`);
-      return null;
-    }
-  };
-
-  React.useEffect(() => {
-    debug('App initialized');
-    
-    // Check if first visit
-    const hasVisited = loadFromStorage('hasVisited');
-    if (!hasVisited) {
-      setShowIntro(true);
-      saveToStorage('hasVisited', true);
-    }
-    
-    const storedItems = loadFromStorage('bathroomItems');
-    const storedBathrooms = loadFromStorage('bathrooms');
-    const storedCurrency = loadFromStorage('currency');
-    const storedCurrencyCode = loadFromStorage('currencyCode');
     const storedCustomCategories = loadFromStorage('customCategories');
     const storedFinalSelections = loadFromStorage('finalSelections');
     
