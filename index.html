@@ -3,26 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bathroom Configurator - Free Bathroom Planning Tool</title>
-  <meta name="description" content="Free bathroom configurator tool. Compare options, manage procurement, track costs.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚿</text></svg>">
-  
-  <!-- Tailwind CSS via CDN -->
+  <title>Bathroom Configurator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Suppress the CDN warning
     const originalWarn = console.warn;
     console.warn = function(...args) {
       if (args[0]?.includes?.('cdn.tailwindcss.com')) return;
       originalWarn.apply(console, args);
     };
   </script>
-  
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
-  <!-- StatCounter Code -->
   <script type="text/javascript">
   var sc_project=13201711; 
   var sc_invisible=1; 
@@ -207,43 +199,6 @@ const App = () => {
     button, .no-print { display: none !important; }
   `;
 
-  // Rest of the helper functions...
-  const saveToStorage = (key, data) => {
-    try {
-      debug(`Saving to storage: ${key}`);
-      const serialized = JSON.stringify(data);
-      debug(`Data size: ${(serialized.length / 1024).toFixed(2)} KB`);
-      return true; // Simulated success
-    } catch (e) {
-      debug(`⚠️ Storage error: ${e.message}`);
-      setStorageAvailable(false);
-      return false;
-    }
-  };
-
-  const loadFromStorage = (key) => {
-    try {
-      return null; // Simulated - no actual storage
-    } catch (e) {
-      debug(`⚠️ Load error: ${e.message}`);
-      return null;
-    }
-  };
-
-  React.useEffect(() => {
-    debug('App initialized');
-    
-    // Check if first visit
-    const hasVisited = loadFromStorage('hasVisited');
-    if (!hasVisited) {
-      setShowIntro(true);
-      saveToStorage('hasVisited', true);
-    }
-    
-    const storedItems = loadFromStorage('bathroomItems');
-    const storedBathrooms = loadFromStorage('bathrooms');
-    const storedCurrency = loadFromStorage('currency');
-    const storedCurrencyCode = loadFromStorage('currencyCode');
   const exportToPDF = (viewName, contentId) => {
     debug(`Exporting ${viewName} to PDF...`);
     
@@ -324,6 +279,45 @@ const App = () => {
     setTimeout(() => setNotification(null), 5000);
   };
 
+
+
+  // Rest of the helper functions...
+  const saveToStorage = (key, data) => {
+    try {
+      debug(`Saving to storage: ${key}`);
+      const serialized = JSON.stringify(data);
+      debug(`Data size: ${(serialized.length / 1024).toFixed(2)} KB`);
+      return true; // Simulated success
+    } catch (e) {
+      debug(`⚠️ Storage error: ${e.message}`);
+      setStorageAvailable(false);
+      return false;
+    }
+  };
+
+  const loadFromStorage = (key) => {
+    try {
+      return null; // Simulated - no actual storage
+    } catch (e) {
+      debug(`⚠️ Load error: ${e.message}`);
+      return null;
+    }
+  };
+
+  React.useEffect(() => {
+    debug('App initialized');
+    
+    // Check if first visit
+    const hasVisited = loadFromStorage('hasVisited');
+    if (!hasVisited) {
+      setShowIntro(true);
+      saveToStorage('hasVisited', true);
+    }
+    
+    const storedItems = loadFromStorage('bathroomItems');
+    const storedBathrooms = loadFromStorage('bathrooms');
+    const storedCurrency = loadFromStorage('currency');
+    const storedCurrencyCode = loadFromStorage('currencyCode');
     const storedCustomCategories = loadFromStorage('customCategories');
     const storedFinalSelections = loadFromStorage('finalSelections');
     
