@@ -10,12 +10,10 @@
 <body>
   <div id="root"></div>
   
-  <!-- Load React, ReactDOM, and Babel -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- Wait for dependencies and compile JSX -->
   <script>
     function initApp() {
       if (typeof React === 'undefined' || typeof ReactDOM === 'undefined' || typeof Babel === 'undefined') {
@@ -26,14 +24,16 @@
       const jsxCode = document.getElementById('app-jsx').textContent;
       
       try {
-        const compiled = Babel.transform(jsxCode, { 
-          presets: ['react']
-        }).code;
-        
+        const compiled = Babel.transform(jsxCode, { presets: ['react'] }).code;
         eval(compiled);
       } catch (error) {
         console.error('Compilation error:', error);
-        document.getElementById('root').innerHTML = '<div style="padding:20px;color:red;">Error: ' + error.message + '</div>';
+        document.getElementById('root').innerHTML = 
+          '<div style="padding:40px;max-width:800px;margin:0 auto;">' +
+          '<h1 style="color:red;font-size:24px;margin-bottom:20px;">App Loading Error</h1>' +
+          '<p style="font-family:monospace;background:#f5f5f5;padding:15px;border-radius:5px;">' + 
+          error.message + 
+          '</p></div>';
       }
     }
     
@@ -44,7 +44,6 @@
     }
   </script>
   
-  <!-- JSX Application Code -->
   <script id="app-jsx" type="text/template">
 const { useState, useEffect, useMemo } = React;
 
@@ -202,103 +201,7 @@ const App = () => {
     }
   };
 
-  const getExportStyles = () => `
-    .container { max-width: 100%; }
-    h1, h2, h3, h4 { margin-top: 15px; margin-bottom: 10px; color: #1f2937; }
-    h1 { font-size: 24px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
-    h2 { font-size: 20px; color: #2563eb; }
-    h3 { font-size: 18px; color: #4b5563; }
-    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-    th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
-    th { background-color: #f3f4f6; font-weight: bold; color: #111827; }
-    tr:nth-child(even) { background-color: #f9fafb; }
-    img { max-width: 100px; height: auto; }
-    .grid { display: grid; gap: 15px; }
-    .card { border: 1px solid #e5e7eb; padding: 15px; margin: 10px 0; border-radius: 8px; }
-    .zone-header { background-color: #eff6ff; padding: 10px; margin: 20px 0 10px 0; border-left: 4px solid #3b82f6; }
-    .price-row { font-weight: bold; background-color: #fef3c7 !important; }
-    button, .no-print { display: none !important; }
-  `;
 
-  const exportToPDF = (viewName, contentId) => {
-    debug(`Exporting ${viewName} to PDF...`);
-    
-    const content = document.getElementById(contentId);
-    
-    if (!content) {
-      const msg = `Cannot export: Make sure you're viewing the ${viewName} content first. Content ID '${contentId}' not found.`;
-      setNotification({ type: 'error', message: msg });
-      setTimeout(() => setNotification(null), 5000);
-      debug(`⚠️ ${msg}`);
-      return;
-    }
-    
-    debug(`✓ Content found, preparing export...`);
-    
-    // Clone the content to avoid modifying the original
-    const contentClone = content.cloneNode(true);
-    
-    // Remove any buttons or interactive elements from the clone
-    const buttons = contentClone.querySelectorAll('button');
-    buttons.forEach(btn => btn.remove());
-    
-    // Try to open popup
-    const printWindow = window.open('', '_blank', 'width=1000,height=800,menubar=yes,toolbar=yes,location=yes');
-    
-    // Check if popup was blocked
-    if (!printWindow || printWindow.closed || typeof printWindow.closed === 'undefined') {
-      const msg = 'Popup blocked! Please allow popups for this site to export PDFs.';
-      setNotification({ type: 'error', message: msg });
-      setTimeout(() => setNotification(null), 6000);
-      debug(`⚠️ ${msg}`);
-      // Don't use alert() - it's blocked in sandbox
-      return;
-    }
-    
-    debug(`✓ Popup window opened, writing content...`);
-    
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Export ${viewName}</title>
-          <style>
-            @media print {
-              body { margin: 20mm; }
-              .no-print { display: none !important; }
-              button { display: none !important; }
-            }
-            * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-            }
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              background: white;
-            }
-            ${getExportStyles()}
-          </style>
-        </head>
-        <body>
-          ${contentClone.innerHTML}
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
-    debug(`✓ PDF export window ready`);
-    setNotification({ type: 'success', message: `${viewName} ready to export! Use Print > Save as PDF` });
-    setTimeout(() => setNotification(null), 5000);
-  };
 
 
 
@@ -1864,7 +1767,7 @@ const App = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">Bathroom Comparison Summary</h2>
                 <button
-                  onClick={() => exportToPDF('Summary', 'summary-content')}
+                  onClick={() => (() => alert("PDF export coming soon"))('Summary', 'summary-content')}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition shadow-lg flex items-center gap-2"
                 >
                   <Download className="w-5 h-5" /> Export PDF
@@ -1955,7 +1858,7 @@ const App = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">Project Overview</h2>
                 <button
-                  onClick={() => exportToPDF('Overview', 'overview-content')}
+                  onClick={() => (() => alert("PDF export coming soon"))('Overview', 'overview-content')}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition shadow-lg flex items-center gap-2"
                 >
                   <Download className="w-5 h-5" /> Export PDF
@@ -2055,7 +1958,7 @@ const App = () => {
                     <Download className="w-5 h-5" /> Export Excel
                   </button>
                   <button
-                    onClick={() => exportToPDF('Procurement', 'procurement-content')}
+                    onClick={() => (() => alert("PDF export coming soon"))('Procurement', 'procurement-content')}
                     className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition shadow-lg flex items-center gap-2"
                   >
                     <Download className="w-5 h-5" /> Export PDF
