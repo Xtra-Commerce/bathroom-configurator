@@ -6,13 +6,385 @@
   <title>Bathroom Configurator</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚿</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 </head>
 <body>
   <div id="root"></div>
+  
+  <!-- Load React first -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Then run app after React loads -->
   <script>
-const{useState:useState,useEffect:useEffect}=React,App=()=>{const[e,t]=useState("database"),[a,s]=useState([]),[r,o]=useState([]),[n,i]=useState(null),[l,c]=useState(!0),[d,u]=useState({}),[m,p]=useState(!0),[g,h]=useState(!1),[b,v]=useState(null),[f,y]=useState("₹"),[w,E]=useState("INR"),[x,k]=useState(!1),[I,B]=useState(""),[S,C]=useState(""),[N,R]=useState("basin"),[A,T]=useState(""),[D,O]=useState(""),[L,_]=useState(null),[M,U]=useState(null),F=()=>[{key:"basin",label:"Basin",zone:"basin_zone",order:1},{key:"mixer",label:"Basin Mixer",zone:"basin_zone",order:2},{key:"wc",label:"WC",zone:"wc_zone",order:1},{key:"hand_shower",label:"Hand Shower",zone:"shower_zone",order:1},{key:"overhead_shower",label:"Overhead Shower",zone:"shower_zone",order:2},{key:"wall_tiles",label:"Wall Tiles",zone:"tiles_zone",order:1},{key:"floor_tiles",label:"Floor Tiles",zone:"tiles_zone",order:2}],P=(e,t)=>{try{if("undefined"!=typeof window&&window.localStorage)return localStorage.setItem(`bathroom_config_${e}`,JSON.stringify(t)),!0}catch(e){p(!1)}return!1},z=e=>{try{if("undefined"!=typeof window&&window.localStorage){const t=localStorage.getItem(`bathroom_config_${e}`);return t?JSON.parse(t):null}}catch(e){return null}return null};useEffect((()=>{const e=z("hasVisited");e||(h(!0),P("hasVisited",!0));const t=z("bathroomItems"),a=z("bathrooms"),s=z("currency"),r=z("currencyCode"),n=z("finalSelections");t&&s(t),a&&o(a),s?(y(s),E(r||"INR")):k(!0),n&&u(n)}),[]),useEffect((()=>{a.length>0&&P("bathroomItems",a)}),[a]),useEffect((()=>{r.length>0&&P("bathrooms",r)}),[r]),useEffect((()=>{Object.keys(d).length>0&&P("finalSelections",d)}),[d]);const G=[{code:"INR",symbol:"₹",name:"Indian Rupee"},{code:"USD",symbol:"$",name:"US Dollar"},{code:"EUR",symbol:"€",name:"Euro"},{code:"GBP",symbol:"£",name:"British Pound"}],H=e=>{const t=G.find((t=>t.code===e));t&&(y(t.symbol),E(e),P("currency",t.symbol),P("currencyCode",e))},W=()=>{if(!I||!S)return void alert("Brand and Model are required!");const e={id:Date.now(),brand:I,model:S,category:N,price:parseFloat(A)||0,imageUrl:M||D};L?s(a.map((t=>t.id===L?{...e,id:L}:t))):s([...a,e]),B(""),C(""),T(""),O(""),U(null),v({type:"success",message:"Item saved!"}),setTimeout((()=>v(null)),2e3),_&&_(null)},q=e=>{confirm("Delete this item?")&&s(a.filter((t=>t.id!==e)))},j=()=>{const e=prompt("Enter bathroom name:");e&&o([...r,{id:Date.now(),name:e,options:[{id:Date.now(),name:"Option A",selections:{}},{id:Date.now()+1,name:"Option B",selections:{}}]}])},J=e=>{let t=0;return Object.values(e.selections||{}).forEach((e=>{const s=a.find((t=>t.id===e));s&&(t+=s.price||0)})),t};return React.createElement("div",{className:"min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6"},b&&React.createElement("div",{className:`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${"success"===b.type?"bg-green-500":"bg-red-500"} text-white font-semibold`},b.message),x&&React.createElement("div",{className:"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"},React.createElement("div",{className:"bg-white rounded-lg p-8 max-w-md w-full mx-4"},React.createElement("h2",{className:"text-2xl font-bold mb-4 text-gray-800"},"Welcome! 🎉"),React.createElement("p",{className:"text-gray-600 mb-6"},"Select your currency:"),React.createElement("div",{className:"space-y-2"},G.map((e=>React.createElement("button",{key:e.code,onClick:()=>{H(e.code),k(!1)},className:"w-full text-left px-4 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition"},`${e.symbol} ${e.code} - ${e.name}`)))))),g&&React.createElement("div",{className:"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"},React.createElement("div",{className:"bg-white rounded-lg p-8 max-w-2xl w-full"},React.createElement("div",{className:"text-center mb-6"},React.createElement("div",{className:"text-6xl mb-4"},"🚿"),React.createElement("h1",{className:"text-3xl font-bold text-gray-800 mb-2"},"Bathroom Configurator"),React.createElement("p",{className:"text-xl text-gray-600"},"Plan. Compare. Procure.")),React.createElement("div",{className:"text-center"},React.createElement("button",{onClick:()=>h(!1),className:"bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-600 transition shadow-lg"},"Get Started →")))),React.createElement("div",{className:"max-w-7xl mx-auto"},React.createElement("div",{className:"bg-white rounded-lg shadow-lg p-6 mb-6"},React.createElement("h1",{className:"text-3xl font-bold text-gray-800 mb-1"},"🚿 Bathroom Configurator"),React.createElement("p",{className:"text-gray-600"},"Compare options, manage procurement")),React.createElement("div",{className:"bg-white rounded-lg shadow-lg p-4 mb-6"},React.createElement("div",{className:"flex gap-2 flex-wrap"},["database","bathrooms","final"].map((a=>React.createElement("button",{key:a,onClick:()=>t(a),className:`px-4 py-2 rounded-lg font-semibold transition ${e===a?"bg-blue-500 text-white":"bg-gray-200 text-gray-700 hover:bg-gray-300"}`},"database"===a?"📊 Database":"bathrooms"===a?"🚿 Bathrooms":"✅ Final"))))),"database"===e&&React.createElement("div",{className:"bg-white rounded-lg shadow-lg p-6"},React.createElement("h2",{className:"text-2xl font-bold mb-4"},"Product Database"),React.createElement("div",{className:"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg"},React.createElement("input",{type:"text",placeholder:"Brand *",value:I,onChange:e=>B(e.target.value),className:"border rounded px-3 py-2"}),React.createElement("input",{type:"text",placeholder:"Model *",value:S,onChange:e=>C(e.target.value),className:"border rounded px-3 py-2"}),React.createElement("select",{value:N,onChange:e=>R(e.target.value),className:"border rounded px-3 py-2"},F().map((e=>React.createElement("option",{key:e.key,value:e.key},e.label)))),React.createElement("input",{type:"number",placeholder:"Price",value:A,onChange:e=>T(e.target.value),className:"border rounded px-3 py-2"}),React.createElement("button",{onClick:W,className:"md:col-span-2 bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600"},L?"Update Product":"Add Product")),React.createElement("div",{className:"space-y-2"},a.map((e=>React.createElement("div",{key:e.id,className:"border rounded p-3 flex justify-between items-center"},React.createElement("div",null,React.createElement("span",{className:"font-bold"},`${e.brand} ${e.model}`),React.createElement("span",{className:"text-gray-600 ml-4"},`${f}${e.price.toFixed(2)}`),React.createElement("span",{className:"text-sm text-gray-500 ml-4"},F().find((t=>t.key===e.category))?.label)),React.createElement("button",{onClick:()=>q(e.id),className:"bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"},"Delete")))),0===a.length&&React.createElement("p",{className:"text-gray-500 text-center py-8"},"No products yet. Add your first product above!"))),"bathrooms"===e&&React.createElement("div",{className:"bg-white rounded-lg shadow-lg p-6"},React.createElement("div",{className:"flex justify-between items-center mb-4"},React.createElement("h2",{className:"text-2xl font-bold"},"Bathrooms"),React.createElement("button",{onClick:j,className:"bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"},"+ Add Bathroom")),React.createElement("div",{className:"space-y-4"},r.map((e=>React.createElement("div",{key:e.id,className:"border rounded-lg p-4"},React.createElement("h3",{className:"text-xl font-bold mb-2"},e.name),React.createElement("div",{className:"grid grid-cols-2 gap-4"},e.options.map((e=>React.createElement("div",{key:e.id,className:"border rounded p-3 bg-gray-50"},React.createElement("div",{className:"font-semibold mb-2"},e.name),React.createElement("div",{className:"text-sm text-gray-600"},`${Object.keys(e.selections||{}).length} items`),React.createElement("div",{className:"font-bold text-blue-600"},`${f}${J(e).toFixed(2)}`)))))))),0===r.length&&React.createElement("p",{className:"text-gray-500 text-center py-8"},'No bathrooms yet. Click "Add Bathroom" to start!'))),"final"===e&&React.createElement("div",{className:"bg-white rounded-lg shadow-lg p-6"},React.createElement("h2",{className:"text-2xl font-bold mb-4"},"Final Selections"),0===r.length?React.createElement("p",{className:"text-gray-500 text-center py-8"},"Create bathrooms first!"):React.createElement("div",{className:"space-y-6"},r.map((e=>React.createElement("div",{key:e.id,className:"border rounded-lg p-4"},React.createElement("h3",{className:"text-xl font-bold mb-3"},e.name),React.createElement("div",{className:"grid grid-cols-2 gap-4"},e.options.map((t=>React.createElement("div",{key:t.id,onClick:()=>u({...d,[e.id]:t.id}),className:`border-2 rounded-lg p-4 cursor-pointer transition ${d[e.id]===t.id?"border-green-500 bg-green-50":"border-gray-300 hover:border-blue-300"}`},React.createElement("div",{className:"font-semibold"},t.name),React.createElement("div",{className:"font-bold text-blue-600 mt-2"},`${f}${J(t).toFixed(2)}`)))))))))),React.createElement("footer",{className:"mt-8 text-center text-sm text-gray-600"},React.createElement("p",null,"Created by ",React.createElement("a",{href:"https://www.linkedin.com/in/poojasengupta/",target:"_blank",className:"text-blue-600 hover:underline"},"Pooja Sengupta")," with Claude AI"))))};ReactDOM.render(React.createElement(App),document.getElementById("root"));
+    // Wait for React to be available
+    (function checkReact() {
+      if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
+        // React is loaded, run the app
+        const { useState, useEffect } = React;
+
+        const App = () => {
+          const [view, setView] = useState('database');
+          const [items, setItems] = useState([]);
+          const [bathrooms, setBathrooms] = useState([]);
+          const [finalSelections, setFinalSelections] = useState({});
+          const [notification, setNotification] = useState(null);
+          const [currency, setCurrency] = useState('₹');
+          const [currencyCode, setCurrencyCode] = useState('INR');
+          const [showCurrencySetup, setShowCurrencySetup] = useState(false);
+          const [showIntro, setShowIntro] = useState(false);
+          const [brand, setBrand] = useState('');
+          const [model, setModel] = useState('');
+          const [category, setCategory] = useState('basin');
+          const [price, setPrice] = useState('');
+
+          const getDefaultCategories = () => [
+            { key: 'basin', label: 'Basin' },
+            { key: 'mixer', label: 'Basin Mixer' },
+            { key: 'wc', label: 'WC' },
+            { key: 'hand_shower', label: 'Hand Shower' },
+            { key: 'overhead_shower', label: 'Overhead Shower' },
+            { key: 'wall_tiles', label: 'Wall Tiles' },
+            { key: 'floor_tiles', label: 'Floor Tiles' }
+          ];
+
+          const saveToStorage = (key, data) => {
+            try {
+              localStorage.setItem('bathroom_config_' + key, JSON.stringify(data));
+            } catch (e) {}
+          };
+
+          const loadFromStorage = (key) => {
+            try {
+              const item = localStorage.getItem('bathroom_config_' + key);
+              return item ? JSON.parse(item) : null;
+            } catch (e) {
+              return null;
+            }
+          };
+
+          useEffect(() => {
+            const hasVisited = loadFromStorage('hasVisited');
+            if (!hasVisited) {
+              setShowIntro(true);
+              saveToStorage('hasVisited', true);
+            }
+            
+            const storedItems = loadFromStorage('bathroomItems');
+            const storedBathrooms = loadFromStorage('bathrooms');
+            const storedCurrency = loadFromStorage('currency');
+            const storedCurrencyCode = loadFromStorage('currencyCode');
+            const storedFinalSelections = loadFromStorage('finalSelections');
+            
+            if (storedItems) setItems(storedItems);
+            if (storedBathrooms) setBathrooms(storedBathrooms);
+            if (storedCurrency) {
+              setCurrency(storedCurrency);
+              setCurrencyCode(storedCurrencyCode || 'INR');
+            } else {
+              setShowCurrencySetup(true);
+            }
+            if (storedFinalSelections) setFinalSelections(storedFinalSelections);
+          }, []);
+
+          useEffect(() => {
+            if (items.length > 0) saveToStorage('bathroomItems', items);
+          }, [items]);
+
+          useEffect(() => {
+            if (bathrooms.length > 0) saveToStorage('bathrooms', bathrooms);
+          }, [bathrooms]);
+
+          const currencyOptions = [
+            { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+            { code: 'USD', symbol: '$', name: 'US Dollar' },
+            { code: 'EUR', symbol: '€', name: 'Euro' },
+            { code: 'GBP', symbol: '£', name: 'British Pound' }
+          ];
+
+          const setCurrencyFromCode = (code) => {
+            const curr = currencyOptions.find(c => c.code === code);
+            if (curr) {
+              setCurrency(curr.symbol);
+              setCurrencyCode(code);
+              saveToStorage('currency', curr.symbol);
+              saveToStorage('currencyCode', code);
+            }
+          };
+
+          const addItem = () => {
+            if (!brand || !model) {
+              alert('Brand and Model are required!');
+              return;
+            }
+            
+            const newItem = {
+              id: Date.now(),
+              brand,
+              model,
+              category,
+              price: parseFloat(price) || 0
+            };
+            
+            setItems([...items, newItem]);
+            setBrand('');
+            setModel('');
+            setPrice('');
+            setNotification({ type: 'success', message: 'Item added!' });
+            setTimeout(() => setNotification(null), 2000);
+          };
+
+          const deleteItem = (id) => {
+            if (confirm('Delete this item?')) {
+              setItems(items.filter(it => it.id !== id));
+            }
+          };
+
+          const addBathroom = () => {
+            const name = prompt('Enter bathroom name:');
+            if (name) {
+              setBathrooms([...bathrooms, {
+                id: Date.now(),
+                name,
+                options: [
+                  { id: Date.now(), name: 'Option A', selections: {} },
+                  { id: Date.now() + 1, name: 'Option B', selections: {} }
+                ]
+              }]);
+            }
+          };
+
+          const calculateOptionTotal = (option) => {
+            let total = 0;
+            Object.values(option.selections || {}).forEach(itemId => {
+              const item = items.find(it => it.id === itemId);
+              if (item) total += item.price || 0;
+            });
+            return total;
+          };
+
+          return React.createElement('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6' },
+            notification && React.createElement('div', {
+              className: 'fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ' + 
+                (notification.type === 'success' ? 'bg-green-500' : 'bg-red-500') + ' text-white font-semibold'
+            }, notification.message),
+
+            showCurrencySetup && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50' },
+              React.createElement('div', { className: 'bg-white rounded-lg p-8 max-w-md w-full mx-4' },
+                React.createElement('h2', { className: 'text-2xl font-bold mb-4 text-gray-800' }, 'Welcome! 🎉'),
+                React.createElement('p', { className: 'text-gray-600 mb-6' }, 'Select your currency:'),
+                React.createElement('div', { className: 'space-y-2' },
+                  currencyOptions.map(curr =>
+                    React.createElement('button', {
+                      key: curr.code,
+                      onClick: () => {
+                        setCurrencyFromCode(curr.code);
+                        setShowCurrencySetup(false);
+                      },
+                      className: 'w-full text-left px-4 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition'
+                    }, curr.symbol + ' ' + curr.code + ' - ' + curr.name)
+                  )
+                )
+              )
+            ),
+
+            showIntro && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4' },
+              React.createElement('div', { className: 'bg-white rounded-lg p-8 max-w-2xl w-full' },
+                React.createElement('div', { className: 'text-center mb-6' },
+                  React.createElement('div', { className: 'text-6xl mb-4' }, '🚿'),
+                  React.createElement('h1', { className: 'text-3xl font-bold text-gray-800 mb-2' }, 'Bathroom Configurator'),
+                  React.createElement('p', { className: 'text-xl text-gray-600' }, 'Plan. Compare. Procure.')
+                ),
+                React.createElement('div', { className: 'text-center' },
+                  React.createElement('button', {
+                    onClick: () => setShowIntro(false),
+                    className: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-600 transition shadow-lg'
+                  }, 'Get Started →')
+                )
+              )
+            ),
+
+            React.createElement('div', { className: 'max-w-7xl mx-auto' },
+              React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-6 mb-6' },
+                React.createElement('h1', { className: 'text-3xl font-bold text-gray-800 mb-1' }, '🚿 Bathroom Configurator'),
+                React.createElement('p', { className: 'text-gray-600' }, 'Compare options, manage procurement')
+              ),
+
+              React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-4 mb-6' },
+                React.createElement('div', { className: 'flex gap-2 flex-wrap' },
+                  ['database', 'bathrooms', 'final'].map(v =>
+                    React.createElement('button', {
+                      key: v,
+                      onClick: () => setView(v),
+                      className: 'px-4 py-2 rounded-lg font-semibold transition ' + 
+                        (view === v ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300')
+                    },
+                      v === 'database' ? '📊 Database' :
+                      v === 'bathrooms' ? '🚿 Bathrooms' :
+                      '✅ Final'
+                    )
+                  )
+                )
+              ),
+
+              view === 'database' && React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-6' },
+                React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, 'Product Database'),
+                
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg' },
+                  React.createElement('input', {
+                    type: 'text',
+                    placeholder: 'Brand *',
+                    value: brand,
+                    onChange: (e) => setBrand(e.target.value),
+                    className: 'border rounded px-3 py-2'
+                  }),
+                  React.createElement('input', {
+                    type: 'text',
+                    placeholder: 'Model *',
+                    value: model,
+                    onChange: (e) => setModel(e.target.value),
+                    className: 'border rounded px-3 py-2'
+                  }),
+                  React.createElement('select', {
+                    value: category,
+                    onChange: (e) => setCategory(e.target.value),
+                    className: 'border rounded px-3 py-2'
+                  },
+                    getDefaultCategories().map(c =>
+                      React.createElement('option', { key: c.key, value: c.key }, c.label)
+                    )
+                  ),
+                  React.createElement('input', {
+                    type: 'number',
+                    placeholder: 'Price',
+                    value: price,
+                    onChange: (e) => setPrice(e.target.value),
+                    className: 'border rounded px-3 py-2'
+                  }),
+                  React.createElement('button', {
+                    onClick: addItem,
+                    className: 'md:col-span-2 bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600'
+                  }, 'Add Product')
+                ),
+
+                React.createElement('div', { className: 'space-y-2' },
+                  items.map(item =>
+                    React.createElement('div', {
+                      key: item.id,
+                      className: 'border rounded p-3 flex justify-between items-center'
+                    },
+                      React.createElement('div', null,
+                        React.createElement('span', { className: 'font-bold' }, item.brand + ' ' + item.model),
+                        React.createElement('span', { className: 'text-gray-600 ml-4' }, currency + item.price.toFixed(2)),
+                        React.createElement('span', { className: 'text-sm text-gray-500 ml-4' }, 
+                          getDefaultCategories().find(c => c.key === item.category)?.label
+                        )
+                      ),
+                      React.createElement('button', {
+                        onClick: () => deleteItem(item.id),
+                        className: 'bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600'
+                      }, 'Delete')
+                    )
+                  ),
+                  items.length === 0 && React.createElement('p', {
+                    className: 'text-gray-500 text-center py-8'
+                  }, 'No products yet. Add your first product above!')
+                )
+              ),
+
+              view === 'bathrooms' && React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-6' },
+                React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                  React.createElement('h2', { className: 'text-2xl font-bold' }, 'Bathrooms'),
+                  React.createElement('button', {
+                    onClick: addBathroom,
+                    className: 'bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600'
+                  }, '+ Add Bathroom')
+                ),
+
+                React.createElement('div', { className: 'space-y-4' },
+                  bathrooms.map(bathroom =>
+                    React.createElement('div', {
+                      key: bathroom.id,
+                      className: 'border rounded-lg p-4'
+                    },
+                      React.createElement('h3', { className: 'text-xl font-bold mb-2' }, bathroom.name),
+                      React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                        bathroom.options.map(option =>
+                          React.createElement('div', {
+                            key: option.id,
+                            className: 'border rounded p-3 bg-gray-50'
+                          },
+                            React.createElement('div', { className: 'font-semibold mb-2' }, option.name),
+                            React.createElement('div', { className: 'text-sm text-gray-600' },
+                              Object.keys(option.selections || {}).length + ' items'
+                            ),
+                            React.createElement('div', { className: 'font-bold text-blue-600' },
+                              currency + calculateOptionTotal(option).toFixed(2)
+                            )
+                          )
+                        )
+                      )
+                    )
+                  ),
+                  bathrooms.length === 0 && React.createElement('p', {
+                    className: 'text-gray-500 text-center py-8'
+                  }, 'No bathrooms yet. Click "Add Bathroom" to start!')
+                )
+              ),
+
+              view === 'final' && React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-6' },
+                React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, 'Final Selections'),
+                bathrooms.length === 0 ?
+                  React.createElement('p', { className: 'text-gray-500 text-center py-8' }, 'Create bathrooms first!') :
+                  React.createElement('div', { className: 'space-y-6' },
+                    bathrooms.map(bathroom =>
+                      React.createElement('div', {
+                        key: bathroom.id,
+                        className: 'border rounded-lg p-4'
+                      },
+                        React.createElement('h3', { className: 'text-xl font-bold mb-3' }, bathroom.name),
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                          bathroom.options.map(option =>
+                            React.createElement('div', {
+                              key: option.id,
+                              onClick: () => setFinalSelections({ ...finalSelections, [bathroom.id]: option.id }),
+                              className: 'border-2 rounded-lg p-4 cursor-pointer transition ' +
+                                (finalSelections[bathroom.id] === option.id
+                                  ? 'border-green-500 bg-green-50'
+                                  : 'border-gray-300 hover:border-blue-300')
+                            },
+                              React.createElement('div', { className: 'font-semibold' }, option.name),
+                              React.createElement('div', { className: 'text-2xl font-bold text-blue-600 mt-2' },
+                                currency + calculateOptionTotal(option).toFixed(2)
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+              ),
+
+              React.createElement('footer', { className: 'mt-8 text-center text-sm text-gray-600' },
+                React.createElement('p', null,
+                  'Created by ',
+                  React.createElement('a', {
+                    href: 'https://www.linkedin.com/in/poojasengupta/',
+                    target: '_blank',
+                    className: 'text-blue-600 hover:underline'
+                  }, 'Pooja Sengupta'),
+                  ' with Claude AI'
+                )
+              )
+            )
+          );
+        };
+
+        ReactDOM.render(React.createElement(App), document.getElementById('root'));
+      } else {
+        // React not loaded yet, try again in 50ms
+        setTimeout(checkReact, 50);
+      }
+    })();
   </script>
 </body>
 </html>
