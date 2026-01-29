@@ -181,6 +181,7 @@ const App = () => {
   const [currency, setCurrency] = React.useState('₹'); // Currency symbol
   const [currencyCode, setCurrencyCode] = React.useState('INR'); // Currency code
   const [showCurrencySetup, setShowCurrencySetup] = React.useState(false); // Show currency selection on first load
+  const [showIntroduction, setShowIntroduction] = React.useState(false); // Show welcome introduction
 
   // Default categories with zones
   const getDefaultCategories = () => [
@@ -3836,7 +3837,6 @@ const App = () => {
   );
 };
 
-export default App;
 
 ReactDOM.render(<App />, document.getElementById('root'));
   </script>
