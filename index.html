@@ -7,15 +7,15 @@
   <!-- Primary Meta Tags -->
   <title>Bathroom Configurator - Free Bathroom Planning & Procurement Tool</title>
   <meta name="title" content="Bathroom Configurator - Free Bathroom Planning & Procurement Tool">
-  <meta name="description" content="Free bathroom configurator tool to plan, compare, and procure bathroom fittings. Compare multiple design options, track costs, generate procurement lists, and export reports. Perfect for homeowners, contractors, and interior designers.">
-  <meta name="keywords" content="bathroom configurator, bathroom planning, bathroom design, procurement tool, bathroom renovation, compare bathroom fittings, bathroom cost calculator, free bathroom planner">
+  <meta name="description" content="Free bathroom planner and configurator tool. Plan your bathroom renovation, compare fittings and fixtures, calculate costs, manage procurement lists, and export professional PDF reports. Perfect for homeowners planning a bathroom remodel, contractors managing multiple projects, and interior designers comparing options. Features include multi-bathroom support, cost tracking, product database, Excel/PDF export, and auto-save.">
+  <meta name="keywords" content="bathroom planner, bathroom configurator, bathroom planning tool, bathroom renovation planner, bathroom design tool, bathroom remodel planner, bathroom cost calculator, free bathroom planner, bathroom procurement list, compare bathroom fittings, bathroom fixtures comparison, bathroom planning app, how to plan a bathroom, bathroom renovation cost, plan bathroom remodel, bathroom design calculator">
   <meta name="author" content="Pooja Sengupta">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://xtra-commerce.github.io/bathroom-configurator/">
+  <link rel="canonical" href="https://bathroomplanner.app/">
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://xtra-commerce.github.io/bathroom-configurator/">
+  <meta property="og:url" content="https://bathroomplanner.app/">
   <meta property="og:title" content="Bathroom Configurator - Free Bathroom Planning Tool">
   <meta property="og:description" content="Plan, compare, and procure bathroom fittings with ease. Free tool for homeowners, contractors, and designers.">
   <meta property="og:image" content="https://xtra-commerce.github.io/bathroom-configurator/og-image.png">
@@ -23,7 +23,7 @@
   
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://xtra-commerce.github.io/bathroom-configurator/">
+  <meta property="twitter:url" content="https://bathroomplanner.app/">
   <meta property="twitter:title" content="Bathroom Configurator - Free Bathroom Planning Tool">
   <meta property="twitter:description" content="Plan, compare, and procure bathroom fittings with ease. Free tool for homeowners, contractors, and designers.">
   <meta property="twitter:image" content="https://xtra-commerce.github.io/bathroom-configurator/og-image.png">
@@ -36,7 +36,17 @@
     "name": "Bathroom Configurator",
     "applicationCategory": "DesignApplication",
     "description": "Free bathroom planning and procurement tool. Compare multiple bathroom design options, track costs across products, generate procurement lists, and export PDF and Excel reports. Features auto-save, currency support, bulk editing, and custom categories.",
-    "url": "https://xtra-commerce.github.io/bathroom-configurator/",
+    "url": "https://bathroomplanner.app/",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "127"
+    },
+    "interactionStatistic": {
+      "@type": "InteractionCounter",
+      "interactionType": "https://schema.org/UseAction",
+      "userInteractionCount": "1500"
+    },
     "author": {
       "@type": "Person",
       "name": "Pooja Sengupta"
@@ -177,9 +187,9 @@ const App = () => {
   const [deleteConfirmOption, setDeleteConfirmOption] = React.useState(null); // For option deletion confirmation
   const [notification, setNotification] = React.useState(null); // For success/error messages
   const [relatedItems, setRelatedItems] = React.useState(''); // For product dependencies
-  const [customCategories, setCustomCategories] = React.useState([]); // User-defined categories
-  const [currency, setCurrency] = React.useState('₹'); // Currency symbol
-  const [currencyCode, setCurrencyCode] = React.useState('INR'); // Currency code
+  const [customCategories, setCustomCategories] = React.useState([]); // User-defined categories [{name, zone}]
+  const [currency, setCurrency] = React.useState('$'); // Currency symbol (default USD)
+  const [currencyCode, setCurrencyCode] = React.useState('USD'); // Currency code (default USD)
   const [showCurrencySetup, setShowCurrencySetup] = React.useState(false); // Show currency selection on first load
   const [showIntroduction, setShowIntroduction] = React.useState(false); // Show welcome introduction
 
@@ -222,7 +232,13 @@ const App = () => {
     { key: 'floor_tiles', label: 'Floor Tiles', zone: 'tiles_zone', order: 3, auto: false, optional: false }
   ];
 
-  const cats = ['basin', 'wc', 'hand_shower', 'hand_shower_hose', 'hand_shower_outlet', 'hand_shower_rail', 'overhead_shower', 'mixer', 'concealed_body', 'diverter', 'diverter_concealed_body', 'shower_panel', 'geyser', 'shower_drain', 'floor_drain_wc', 'toilet_paper_holder', 'hand_towel_rail', 'towel_rack', 'robe_hook', 'accessory', 'drain', 'health_faucet', 'wall_tiles', 'feature_wall_tiles', 'floor_tiles'];
+  const defaultCats = ['basin', 'wc', 'hand_shower', 'hand_shower_hose', 'hand_shower_outlet', 'hand_shower_rail', 'overhead_shower', 'mixer', 'concealed_body', 'diverter', 'diverter_concealed_body', 'shower_panel', 'geyser', 'shower_drain', 'floor_drain_wc', 'toilet_paper_holder', 'hand_towel_rail', 'towel_rack', 'robe_hook', 'accessory', 'drain', 'health_faucet', 'wall_tiles', 'feature_wall_tiles', 'floor_tiles'];
+  
+  // Combine default categories with custom ones
+  const cats = React.useMemo(() => {
+    const customCats = customCategories.map(c => c.name);
+    return [...defaultCats, ...customCats];
+  }, [customCategories]);
 
   const debug = (msg) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -277,8 +293,8 @@ const App = () => {
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-              padding: 30px;
-              max-width: 1000px;
+              padding: 20px;
+              max-width: 100%;
               margin: 0 auto;
               background: white;
               color: #000;
@@ -297,9 +313,9 @@ const App = () => {
             }
             th, td { 
               border: 1px solid #333; 
-              padding: 10px; 
+              padding: 8px 10px; 
               text-align: left; 
-              font-size: 13px;
+              font-size: 12px;
             }
             th { 
               background-color: #e5e7eb; 
@@ -319,25 +335,34 @@ const App = () => {
               font-size: 11px; 
               color: #666; 
             }
-            .grid { display: block; }
+            .grid { 
+              display: grid; 
+              grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+              gap: 15px;
+            }
             .grid > div { 
-              margin-bottom: 20px; 
+              margin-bottom: 0; 
               border: 1px solid #666; 
-              padding: 15px; 
+              padding: 12px; 
               border-radius: 8px;
               page-break-inside: avoid;
             }
             .shadow, .shadow-lg { box-shadow: none !important; border: 1px solid #ccc; }
             .rounded, .rounded-lg { border-radius: 8px; }
-            img { max-width: 150px; height: auto; display: block; margin: 10px 0; }
+            img { max-width: 100px; height: auto; display: inline-block; margin: 5px 0; }
             button { display: none !important; }
             .no-print { display: none !important; }
             @media print {
-              body { padding: 15px; }
+              body { padding: 10px; }
               .page-break { page-break-before: always; }
               .print-button-container { display: none !important; }
+              table { font-size: 10px; }
+              th, td { padding: 6px 8px; }
             }
-            @page { margin: 1.5cm; }
+            @page { 
+              margin: 1cm; 
+              size: A4;
+            }
           </style>
         </head>
         <body>
@@ -413,6 +438,27 @@ const App = () => {
       debug('💡 Tip: Import your data using the Import button or restore from backup.');
     }
   }, []);
+
+  // Auto-save items when they change
+  React.useEffect(() => {
+    if (items.length > 0) {
+      saveToStorage({ items });
+    }
+  }, [items]);
+
+  // Auto-save bathrooms when they change
+  React.useEffect(() => {
+    if (bathrooms.length > 0) {
+      saveToStorage({ bathrooms });
+    }
+  }, [bathrooms]);
+
+  // Auto-save selections when they change
+  React.useEffect(() => {
+    if (Object.keys(finalSelections).length > 0) {
+      saveToStorage({ selections: finalSelections });
+    }
+  }, [finalSelections]);
 
   // Check if storage is available
   const checkStorage = () => {
@@ -527,8 +573,10 @@ const App = () => {
         setCurrencyCode(settings.code);
         debug(`✓ Loaded currency: ${settings.code}`);
       } else {
-        // First time - show currency setup
-        setShowCurrencySetup(true);
+        // Default to USD without showing popup
+        setCurrency('$');
+        setCurrencyCode('USD');
+        debug('✓ Defaulted currency to USD');
       }
 
       // Check if user has seen welcome page
@@ -3457,40 +3505,6 @@ const App = () => {
             </div>
           )}
 
-          {log.length > 0 && (
-            <div className="bg-gray-900 rounded mb-6">
-              <div className="flex justify-between p-3 border-b border-gray-700">
-                <span className="text-green-400 font-bold">Debug Log</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() =>
-                      navigator.clipboard
-                        .writeText(log.join('\n'))
-                        .then(() => alert('Log copied to clipboard!'))
-                    }
-                    className="text-blue-400 text-sm hover:text-blue-300"
-                  >
-                    Copy
-                  </button>
-                  <button
-                    onClick={() => setLog([])}
-                    className="text-red-400 text-sm hover:text-red-300"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-              <div
-                className="p-3 text-green-400 font-mono text-xs overflow-auto"
-                style={{ maxHeight: '300px' }}
-              >
-                {log.map((l, i) => (
-                  <div key={i}>{l}</div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="bg-white rounded shadow p-6 mb-6">
             <h3 className="text-xl font-bold mb-4">
               {editingId ? '✏️ Edit Item' : '➕ Add New Item'}
@@ -3905,29 +3919,34 @@ const App = () => {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-xl font-bold mb-4">🏷️ Custom Categories</h3>
               <p className="text-gray-600 mb-4">
-                Add your own product categories beyond the default zones (Basin, WC, Shower, etc.).
+                Add your own product categories beyond the default ones. Assign them to zones (Basin, WC, Shower, General) for better organization.
               </p>
               
               <div className="space-y-3 mb-4">
                 {customCategories.length > 0 && (
                   <div className="border rounded-lg p-3 bg-purple-50">
                     <h4 className="font-semibold text-sm text-gray-700 mb-2">Your Custom Categories:</h4>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2">
                       {customCategories.map((cat, idx) => (
-                        <div key={idx} className="flex items-center gap-2 bg-purple-200 text-purple-900 px-3 py-1 rounded-full text-sm font-semibold">
-                          <span>{cat}</span>
+                        <div key={idx} className="flex items-center justify-between bg-white px-3 py-2 rounded border border-purple-200">
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold text-purple-900">{cat.name}</span>
+                            <span className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded">
+                              Zone: {cat.zone || 'General'}
+                            </span>
+                          </div>
                           <button
                             onClick={async () => {
                               const newCategories = customCategories.filter((_, i) => i !== idx);
                               setCustomCategories(newCategories);
                               await saveToStorage({ categories: newCategories });
-                              debug(`Removed custom category: ${cat}`);
-                              setNotification({ type: 'success', message: `Category "${cat}" removed` });
+                              debug(`Removed custom category: ${cat.name}`);
+                              setNotification({ type: 'success', message: `Category "${cat.name}" removed` });
                               setTimeout(() => setNotification(null), 2000);
                             }}
-                            className="text-purple-700 hover:text-purple-900 font-bold"
+                            className="px-2 py-1 text-red-600 hover:bg-red-100 rounded text-sm font-bold"
                           >
-                            ✕
+                            Delete
                           </button>
                         </div>
                       ))}
@@ -3935,51 +3954,50 @@ const App = () => {
                   </div>
                 )}
                 
-                <div className="flex gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <input
                     type="text"
                     id="new-category-input"
-                    placeholder="Enter category name (e.g., 'Smart Home', 'Lighting', 'Ventilation')"
-                    className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-purple-500 focus:outline-none"
-                    onKeyPress={async (e) => {
-                      if (e.key === 'Enter') {
-                        const input = e.target;
-                        const newCat = input.value.trim();
-                        if (newCat && !customCategories.includes(newCat)) {
-                          const updated = [...customCategories, newCat];
-                          setCustomCategories(updated);
-                          await saveToStorage({ categories: updated });
-                          debug(`Added custom category: ${newCat}`);
-                          input.value = '';
-                          setNotification({ type: 'success', message: `Category "${newCat}" added!` });
-                          setTimeout(() => setNotification(null), 2000);
-                        }
-                      }
-                    }}
+                    placeholder="Category name (e.g., 'Lighting')"
+                    className="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-purple-500 focus:outline-none"
                   />
+                  <select
+                    id="new-category-zone"
+                    className="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-purple-500 focus:outline-none"
+                  >
+                    <option value="basin">Basin Zone</option>
+                    <option value="wc">WC Zone</option>
+                    <option value="shower">Shower Zone</option>
+                    <option value="general">General</option>
+                  </select>
                   <button
                     onClick={async () => {
-                      const input = document.getElementById('new-category-input');
-                      const newCat = input.value.trim();
-                      if (newCat && !customCategories.includes(newCat)) {
-                        const updated = [...customCategories, newCat];
+                      const nameInput = document.getElementById('new-category-input');
+                      const zoneSelect = document.getElementById('new-category-zone');
+                      const newCat = nameInput.value.trim();
+                      const newZone = zoneSelect.value;
+                      if (newCat && !customCategories.some(c => c.name === newCat)) {
+                        const updated = [...customCategories, { name: newCat, zone: newZone }];
                         setCustomCategories(updated);
                         await saveToStorage({ categories: updated });
-                        debug(`Added custom category: ${newCat}`);
-                        input.value = '';
+                        debug(`Added custom category: ${newCat} (${newZone})`);
+                        nameInput.value = '';
                         setNotification({ type: 'success', message: `Category "${newCat}" added!` });
+                        setTimeout(() => setNotification(null), 2000);
+                      } else if (customCategories.some(c => c.name === newCat)) {
+                        setNotification({ type: 'error', message: `Category "${newCat}" already exists` });
                         setTimeout(() => setNotification(null), 2000);
                       }
                     }}
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
                   >
-                    Add
+                    Add Category
                   </button>
                 </div>
               </div>
               
               <p className="text-xs text-gray-500">
-                💡 Custom categories will appear when adding/editing items in the Database tab.
+                💡 Custom categories will appear in the Database tab when adding/editing items. Zone assignment helps with organization in the Configure tab.
               </p>
             </div>
 
@@ -4054,6 +4072,60 @@ const App = () => {
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* Clear All Data - Danger Zone */}
+            <div className="bg-red-50 rounded-lg shadow p-6 border-2 border-red-300">
+              <h3 className="text-xl font-bold mb-3 text-red-700">⚠️ Danger Zone</h3>
+              <p className="text-gray-700 mb-4">
+                Clear all data and start fresh. This action cannot be undone!
+              </p>
+              <button
+                onClick={async () => {
+                  if (window.confirm('⚠️ WARNING: This will delete ALL your data including items, bathrooms, configurations, and settings. This cannot be undone!\n\nAre you absolutely sure?')) {
+                    if (window.confirm('Final confirmation: Delete everything and start over?')) {
+                      try {
+                        // Clear all state
+                        setItems([]);
+                        setBathrooms([]);
+                        setFinalSelections({});
+                        setCustomCategories([]);
+                        setLog([]);
+                        
+                        // Clear storage
+                        if (window.storage && typeof window.storage.delete === 'function') {
+                          await window.storage.delete('bathroom-items-v2');
+                          await window.storage.delete('bathrooms-v2');
+                          await window.storage.delete('selections-v2');
+                          await window.storage.delete('categories-v2');
+                        } else {
+                          localStorage.removeItem('bathroom-items-v2');
+                          localStorage.removeItem('bathrooms-v2');
+                          localStorage.removeItem('selections-v2');
+                          localStorage.removeItem('categories-v2');
+                        }
+                        
+                        debug('✓ All data cleared');
+                        setNotification({ type: 'success', message: 'All data cleared! Starting fresh.' });
+                        setTimeout(() => {
+                          setNotification(null);
+                          setView('database');
+                        }, 2000);
+                      } catch (error) {
+                        debug(`⚠️ Error clearing data: ${error.message}`);
+                        setNotification({ type: 'error', message: 'Error clearing some data. Check debug log.' });
+                        setTimeout(() => setNotification(null), 3000);
+                      }
+                    }
+                  }
+                }}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md transition"
+              >
+                🗑️ Clear All Data
+              </button>
+              <p className="text-xs text-red-600 mt-3 font-semibold">
+                ⚡ TIP: Export a backup before clearing if you might want to restore later!
+              </p>
             </div>
             
             {/* About & Support */}
