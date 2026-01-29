@@ -356,10 +356,10 @@ const App = () => {
             <p style="margin-bottom: 15px; font-size: 14px; color: #333;">
               <strong>Ready to save?</strong> Click the button below to open your browser's print dialog, then choose "Save as PDF".
             </p>
-            <button onclick="window.print()" style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-right: 10px;">
+            <button onclick="window.print()" style="display: inline-block !important; padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-right: 10px;">
               🖨️ Print / Save as PDF
             </button>
-            <button onclick="window.close()" style="padding: 12px 24px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold;">
+            <button onclick="window.close()" style="display: inline-block !important; padding: 12px 24px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold;">
               ✕ Close Window
             </button>
           </div>
@@ -978,8 +978,21 @@ const App = () => {
   const restoreBackup = async (backupData) => {
     try {
       if (backupData.version === '2.0') {
-        const newItems = backupData.items || [];
-        const newBathrooms = backupData.bathrooms || [];
+        // Normalize property names for backward compatibility
+        const newItems = (backupData.items || []).map(item => ({
+          ...item,
+          // Convert imageUrl to image_url if present
+          image_url: item.image_url || item.imageUrl || '',
+          // Remove old imageUrl property if it exists
+          imageUrl: undefined
+        }));
+        
+        // Normalize bathrooms to ensure renders array exists
+        const newBathrooms = (backupData.bathrooms || []).map(bathroom => ({
+          ...bathroom,
+          renders: bathroom.renders || []
+        }));
+        
         const newSelections = backupData.selections || {};
         
         setItems(newItems);
@@ -1020,11 +1033,18 @@ const App = () => {
           if (data.version === '2.0' && data.items) {
             await restoreBackup(data);
           } else if (Array.isArray(data)) {
-            // Regular items array
-            setItems(data);
-            await saveToStorage({ items: data });
-            debug(`✓ Imported ${data.length} items from JSON`);
-            alert(`Imported ${data.length} items!`);
+            // Regular items array - normalize property names
+            const normalizedItems = data.map(item => ({
+              ...item,
+              // Convert imageUrl to image_url if present
+              image_url: item.image_url || item.imageUrl || '',
+              // Remove old imageUrl property if it exists
+              imageUrl: undefined
+            }));
+            setItems(normalizedItems);
+            await saveToStorage({ items: normalizedItems });
+            debug(`✓ Imported ${normalizedItems.length} items from JSON`);
+            alert(`Imported ${normalizedItems.length} items!`);
           } else {
             throw new Error('Invalid JSON format');
           }
@@ -1085,7 +1105,7 @@ const App = () => {
             description: getValue(['Description', 'description']),
             type: getValue(['Type', 'type']),
             unit_price: parseFloat(getValue(['Price', 'price', 'Unit Price'])) || null,
-            image_url: getValue(['Image', 'image', 'image_url', 'Image URL'])
+            image_url: getValue(['Image', 'image', 'image_url', 'imageUrl', 'Image URL'])
           };
         });
         
