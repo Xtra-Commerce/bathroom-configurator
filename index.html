@@ -35,7 +35,7 @@
           '<pre style="margin:0;white-space:pre-wrap;word-wrap:break-word;font-size:14px;">' + 
           error.message + 
           '</pre></div>' +
-          '<p style="color:#666;">Please report this error with the message above.</p>' +
+          '<p style="color:#666;">Please report this error.</p>' +
           '</div>';
       }
     }
@@ -856,29 +856,29 @@ const App = () => {
 
       {/* Introduction Screen */}
       {showIntro && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="text-center mb-6">
-              <div className="text-6xl mb-4">🚿</div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8 max-w-4xl w-full max-h-[95vh] overflow-y-auto">
+            <div className="text-center mb-4 sm:mb-6">
+              <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">🚿</div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2">
                 Welcome to Bathroom Configurator
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-lg sm:text-xl text-gray-600">
                 Plan. Compare. Procure.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-blue-50 rounded-lg p-6">
-                <h3 className="text-lg font-bold mb-3">🏠 Born from Experience</h3>
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6">
+              <div className="bg-blue-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">🏠 Born from Experience</h3>
                 <p className="text-gray-700 text-sm">
                   What started as a desperate attempt to organize bathroom fittings for a real DIY renovation 
                   turned into this tool. If you're drowning in product catalogs, this is for you!
                 </p>
               </div>
 
-              <div className="bg-green-50 rounded-lg p-6">
-                <h3 className="text-lg font-bold mb-3">✨ Key Features</h3>
+              <div className="bg-green-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">✨ Key Features</h3>
                 <ul className="text-sm text-gray-700 space-y-1">
                   <li>• Compare multiple design options</li>
                   <li>• Track costs across products</li>
@@ -888,8 +888,8 @@ const App = () => {
                 </ul>
               </div>
 
-              <div className="bg-purple-50 rounded-lg p-6">
-                <h3 className="text-lg font-bold mb-3">👥 Perfect For</h3>
+              <div className="bg-purple-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">👥 Perfect For</h3>
                 <ul className="text-sm text-gray-700 space-y-1">
                   <li>• Homeowners planning renovations</li>
                   <li>• Contractors managing projects</li>
@@ -898,8 +898,8 @@ const App = () => {
                 </ul>
               </div>
 
-              <div className="bg-orange-50 rounded-lg p-6">
-                <h3 className="text-lg font-bold mb-3">🚀 Quick Start</h3>
+              <div className="bg-orange-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">🚀 Quick Start</h3>
                 <ol className="text-sm text-gray-700 space-y-1">
                   <li>1. Set your currency</li>
                   <li>2. Add products to database</li>
@@ -913,11 +913,11 @@ const App = () => {
             <div className="text-center">
               <button
                 onClick={() => setShowIntro(false)}
-                className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-600 transition shadow-lg"
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:from-blue-600 hover:to-indigo-600 transition shadow-lg"
               >
                 Get Started →
               </button>
-              <p className="text-xs text-gray-500 mt-4">
+              <p className="text-xs text-gray-500 mt-3 sm:mt-4">
                 💡 Tip: Click the Help button anytime for detailed guidance
               </p>
             </div>
@@ -1474,11 +1474,15 @@ const App = () => {
                   <select
                     value={selectedBathroom?.id || ''}
                     onChange={(e) => {
-                      const bathroom = bathrooms.find(b => b.id === parseInt(e.target.value));
-                      if (bathroom) {
-                        // Auto-save current work before switching
-                        saveToStorage('bathrooms', bathrooms);
-                        setSelectedBathroom(bathroom);
+                      const bathroomId = e.target.value;
+                      if (bathroomId) {
+                        const bathroom = bathrooms.find(b => b.id.toString() === bathroomId);
+                        if (bathroom) {
+                          setSelectedBathroom(bathroom);
+                          debug(`Switched to bathroom: ${bathroom.name}`);
+                        }
+                      } else {
+                        setSelectedBathroom(null);
                       }
                     }}
                     className="border-2 border-gray-300 rounded-lg px-4 py-2 text-lg font-semibold min-w-[300px] focus:border-blue-500 focus:outline-none"
