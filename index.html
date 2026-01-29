@@ -114,14 +114,15 @@
         const compiled = Babel.transform(jsxCode, { presets: ['react'] }).code;
         eval(compiled);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Compilation Error:', error);
         document.getElementById('root').innerHTML = 
           '<div style="padding:40px;max-width:900px;margin:0 auto;font-family:sans-serif;">' +
           '<h1 style="color:#dc2626;font-size:28px;margin-bottom:20px;">⚠️ Error Loading App</h1>' +
-          '<div style="background:#fef2f2;border:2px solid #fecaca;border-radius:8px;padding:20px;">' +
+          '<div style="background:#fef2f2;border:2px solid #fecaca;border-radius:8px;padding:20px;margin-bottom:20px;">' +
           '<pre style="margin:0;white-space:pre-wrap;word-wrap:break-word;font-size:14px;">' + 
           error.message + 
           '</pre></div>' +
+          '<p style="color:#666;">Please refresh the page. If the problem persists, clear your browser cache.</p>' +
           '</div>';
       }
     }
@@ -134,9 +135,6 @@
   </script>
   
   <script id="app-jsx" type="text/template">
-import React, { useState } from 'react';
-import { Upload, Download, AlertCircle, Save, RefreshCw } from 'lucide-react';
-
 // We'll load jsPDF dynamically when needed
 const loadJsPDF = async () => {
   if (window.jsPDF) return window.jsPDF;
@@ -151,38 +149,38 @@ const loadJsPDF = async () => {
 };
 
 const App = () => {
-  const [view, setView] = useState('database');
-  const [items, setItems] = useState([]);
-  const [bathrooms, setBathrooms] = useState([]);
-  const [selectedBathroom, setSelectedBathroom] = useState(null);
-  const [showPrices, setShowPrices] = useState(true);
-  const [finalSelections, setFinalSelections] = useState({});
-  const [log, setLog] = useState([]);
-  const [storageAvailable, setStorageAvailable] = useState(true);
+  const [view, setView] = React.useState('database');
+  const [items, setItems] = React.useState([]);
+  const [bathrooms, setBathrooms] = React.useState([]);
+  const [selectedBathroom, setSelectedBathroom] = React.useState(null);
+  const [showPrices, setShowPrices] = React.useState(true);
+  const [finalSelections, setFinalSelections] = React.useState({});
+  const [log, setLog] = React.useState([]);
+  const [storageAvailable, setStorageAvailable] = React.useState(true);
 
   // Form state
-  const [brand, setBrand] = useState('');
-  const [model, setModel] = useState('');
-  const [category, setCategory] = useState('basin');
-  const [series, setSeries] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState('');
-  const [price, setPrice] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [editingId, setEditingId] = useState(null);
-  const [filterCat, setFilterCat] = useState('all');
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [bulkEditMode, setBulkEditMode] = useState(false);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [showBulkEditPanel, setShowBulkEditPanel] = useState(false);
-  const [deleteConfirmOption, setDeleteConfirmOption] = useState(null); // For option deletion confirmation
-  const [notification, setNotification] = useState(null); // For success/error messages
-  const [relatedItems, setRelatedItems] = useState(''); // For product dependencies
-  const [customCategories, setCustomCategories] = useState([]); // User-defined categories
-  const [currency, setCurrency] = useState('₹'); // Currency symbol
-  const [currencyCode, setCurrencyCode] = useState('INR'); // Currency code
-  const [showCurrencySetup, setShowCurrencySetup] = useState(false); // Show currency selection on first load
+  const [brand, setBrand] = React.useState('');
+  const [model, setModel] = React.useState('');
+  const [category, setCategory] = React.useState('basin');
+  const [series, setSeries] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [type, setType] = React.useState('');
+  const [price, setPrice] = React.useState('');
+  const [imageUrl, setImageUrl] = React.useState('');
+  const [editingId, setEditingId] = React.useState(null);
+  const [filterCat, setFilterCat] = React.useState('all');
+  const [deleteConfirm, setDeleteConfirm] = React.useState(null);
+  const [uploadedImage, setUploadedImage] = React.useState(null);
+  const [bulkEditMode, setBulkEditMode] = React.useState(false);
+  const [selectedItems, setSelectedItems] = React.useState([]);
+  const [showBulkEditPanel, setShowBulkEditPanel] = React.useState(false);
+  const [deleteConfirmOption, setDeleteConfirmOption] = React.useState(null); // For option deletion confirmation
+  const [notification, setNotification] = React.useState(null); // For success/error messages
+  const [relatedItems, setRelatedItems] = React.useState(''); // For product dependencies
+  const [customCategories, setCustomCategories] = React.useState([]); // User-defined categories
+  const [currency, setCurrency] = React.useState('₹'); // Currency symbol
+  const [currencyCode, setCurrencyCode] = React.useState('INR'); // Currency code
+  const [showCurrencySetup, setShowCurrencySetup] = React.useState(false); // Show currency selection on first load
 
   // Default categories with zones
   const getDefaultCategories = () => [
@@ -1066,9 +1064,9 @@ const App = () => {
       { name: 'Robe Hook', checked: false }
     ];
 
-    const [bathroomName, setBathroomName] = useState('');
-    const [importance, setImportance] = useState('medium');
-    const [numOptions, setNumOptions] = useState(3);
+    const [bathroomName, setBathroomName] = React.useState('');
+    const [importance, setImportance] = React.useState('medium');
+    const [numOptions, setNumOptions] = React.useState(3);
 
     const addBathroom = async () => {
       if (!bathroomName) {
@@ -2072,7 +2070,7 @@ const App = () => {
               className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2"
               title="Export to PDF"
             >
-              <Download size={18} />
+              📥
               Export PDF
             </button>
             <button
@@ -2230,7 +2228,7 @@ const App = () => {
             className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2"
             title="Export to PDF"
           >
-            <Download size={18} />
+            📥
             Export PDF
           </button>
         </div>
@@ -2562,14 +2560,14 @@ const App = () => {
               className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2"
               title="Export to PDF"
             >
-              <Download size={18} />
+              📥
               Export PDF
             </button>
             <button
               onClick={exportToExcel}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
-              <Download className="inline mr-1" size={16} />
+              📥
               Export Excel
             </button>
           </div>
@@ -2868,12 +2866,7 @@ const App = () => {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  setView('welcome');
-                  if (typeof window !== 'undefined' && window.sc_log_pv) {
-                    try { window.sc_log_pv(); } catch(e) {}
-                  }
-                }}
+                onClick={() => setView('welcome')}
                 className={`px-4 py-2 rounded ${
                   view === 'welcome' ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'
                 }`}
@@ -3022,7 +3015,7 @@ const App = () => {
                     Make sure your Excel has columns: Brand, Model, Type, Price, Image
                   </p>
                   <label className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded cursor-pointer hover:bg-green-700">
-                    <Upload className="mr-2" size={16} />
+                    📤 
                     Import Excel
                     <input type="file" accept=".xlsx,.xls" onChange={imp} className="hidden" />
                   </label>
@@ -3036,7 +3029,7 @@ const App = () => {
                     Backup files are named: bathroom-backup-YYYY-MM-DD.json
                   </p>
                   <label className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded cursor-pointer hover:bg-purple-700">
-                    <Upload className="mr-2" size={16} />
+                    📤 
                     Restore Backup
                     <input type="file" accept=".json" onChange={imp} className="hidden" />
                   </label>
@@ -3069,11 +3062,11 @@ const App = () => {
                     onClick={exp}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
-                    <Download className="inline mr-1" size={16} />
+                    📥
                     Export Items
                   </button>
                   <label className="px-4 py-2 bg-green-600 text-white rounded cursor-pointer hover:bg-green-700">
-                    <Upload className="inline mr-1" size={16} />
+                    📤
                     Import
                     <input type="file" accept=".json,.xlsx,.xls" onChange={imp} className="hidden" />
                   </label>
@@ -3081,7 +3074,7 @@ const App = () => {
                     onClick={createBackup}
                     className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
                   >
-                    <Save className="inline mr-1" size={16} />
+                    💾
                     Backup All
                   </button>
                   <button
@@ -3477,7 +3470,7 @@ const App = () => {
 
             {items.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <AlertCircle className="mx-auto mb-4" size={48} />
+                ⚠️
                 <p className="text-lg">No items in database</p>
                 <p className="text-sm">Add items manually or import from Excel/JSON</p>
               </div>
