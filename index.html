@@ -193,45 +193,6 @@ const App = () => {
   const [showCurrencySetup, setShowCurrencySetup] = React.useState(false); // Show currency selection on first load
   const [showIntroduction, setShowIntroduction] = React.useState(false); // Show welcome introduction
 
-  // Default categories with zones
-  const getDefaultCategories = () => [
-    // Basin Zone
-    { key: 'basin', label: 'Basin', zone: 'basin_zone', order: 1, auto: false, optional: false },
-    { key: 'mixer', label: 'Basin Mixer', zone: 'basin_zone', order: 2, auto: false, optional: false },
-    { key: 'concealed_body', label: 'Concealed Body', zone: 'basin_zone', order: 3, auto: true, optional: false },
-    
-    // WC Zone
-    { key: 'wc', label: 'WC', zone: 'wc_zone', order: 1, auto: false, optional: false },
-    { key: 'health_faucet', label: 'Health Faucet', zone: 'wc_zone', order: 2, auto: false, optional: true },
-    
-    // Shower Zone
-    { key: 'hand_shower', label: 'Hand Shower', zone: 'shower_zone', order: 1, auto: false, optional: false },
-    { key: 'hand_shower_hose', label: 'Hand Shower Hose', zone: 'shower_zone', order: 2, auto: true, optional: false },
-    { key: 'hand_shower_outlet', label: 'Hand Shower Wall Outlet', zone: 'shower_zone', order: 3, auto: true, optional: false },
-    { key: 'hand_shower_rail', label: 'Hand Shower Rail', zone: 'shower_zone', order: 4, auto: false, optional: true },
-    { key: 'overhead_shower', label: 'Overhead Shower', zone: 'shower_zone', order: 5, auto: false, optional: false },
-    { key: 'shower_arm', label: 'Shower Arm', zone: 'shower_zone', order: 6, auto: true, optional: false },
-    { key: 'diverter', label: 'Diverter', zone: 'shower_zone', order: 7, auto: false, optional: false },
-    { key: 'diverter_concealed_body', label: 'Diverter Concealed Body', zone: 'shower_zone', order: 8, auto: true, optional: false },
-    { key: 'shower_panel', label: 'Shower Panel', zone: 'shower_zone', order: 9, auto: false, optional: false },
-    { key: 'geyser', label: 'Geyser', zone: 'shower_zone', order: 10, auto: false, optional: true },
-    
-    // Accessories Zone
-    { key: 'health_faucet_set', label: 'Health Faucet Set', zone: 'accessories_zone', order: 1, auto: false, optional: true },
-    { key: 'shower_drain', label: 'Shower Drain', zone: 'accessories_zone', order: 2, auto: false, optional: true },
-    { key: 'floor_drain_wc', label: 'Floor Drain near WC', zone: 'accessories_zone', order: 3, auto: false, optional: true },
-    { key: 'toilet_paper_holder', label: 'Toilet Paper Holder', zone: 'accessories_zone', order: 4, auto: false, optional: true },
-    { key: 'hand_towel_rail', label: 'Hand Towel Rail', zone: 'accessories_zone', order: 5, auto: false, optional: true },
-    { key: 'towel_rack', label: 'Towel Rack', zone: 'accessories_zone', order: 6, auto: false, optional: true },
-    { key: 'robe_hook', label: 'Robe Hook', zone: 'accessories_zone', order: 7, auto: false, optional: true },
-    { key: 'drain', label: 'Drain', zone: 'accessories_zone', order: 8, auto: false, optional: true },
-    
-    // Tiles Zone
-    { key: 'wall_tiles', label: 'Wall Tiles', zone: 'tiles_zone', order: 1, auto: false, optional: false },
-    { key: 'feature_wall_tiles', label: 'Feature Wall Tiles', zone: 'tiles_zone', order: 2, auto: false, optional: true },
-    { key: 'floor_tiles', label: 'Floor Tiles', zone: 'tiles_zone', order: 3, auto: false, optional: false }
-  ];
-
   const defaultCats = ['basin', 'wc', 'hand_shower', 'hand_shower_hose', 'hand_shower_outlet', 'hand_shower_rail', 'overhead_shower', 'mixer', 'concealed_body', 'diverter', 'diverter_concealed_body', 'shower_panel', 'geyser', 'shower_drain', 'floor_drain_wc', 'toilet_paper_holder', 'hand_towel_rail', 'towel_rack', 'robe_hook', 'accessory', 'drain', 'health_faucet', 'wall_tiles', 'feature_wall_tiles', 'floor_tiles'];
   
   // Combine default categories with custom ones
@@ -1554,7 +1515,7 @@ const App = () => {
       setSelectedBathroom(updated);
     };
 
-    const categories = [
+    const defaultCategories = [
       // Basin Zone
       { key: 'basin', label: 'Basin', zone: 'basin', order: 1, types: ['basin', 'Basin'] },
       { key: 'mixer', label: 'Basin Mixer', zone: 'basin', order: 2, types: ['mixer', 'Mixer', 'basin mixer', 'Basin Mixer'] },
@@ -1591,12 +1552,31 @@ const App = () => {
       { key: 'floor_tiles', label: 'Floor Tiles', zone: 'tiles', order: 3, types: ['floor_tiles', 'Floor Tiles', 'floor tiles'] }
     ];
 
+    // Add custom categories to the categories array
+    const customCats = customCategories.map((cat, index) => {
+      const catName = typeof cat === 'string' ? cat : cat.name;
+      const catZone = typeof cat === 'string' ? 'general' : (cat.zone || 'general');
+      
+      return {
+        key: catName.toLowerCase().replace(/\s+/g, '_'),
+        label: catName,
+        zone: catZone,
+        order: 100 + index, // Place custom categories after default ones
+        optional: true,
+        types: [catName, catName.toLowerCase()],
+        isCustom: true
+      };
+    });
+
+    const categories = [...defaultCategories, ...customCats];
+
     const zoneLabels = {
       'basin': '🚰 BASIN ZONE',
       'wc': '🚽 WC ZONE',
       'shower': '🚿 SHOWER ZONE',
       'accessories': '🔧 ACCESSORIES ZONE',
-      'tiles': '🏗️ TILES ZONE'
+      'tiles': '🏗️ TILES ZONE',
+      'general': '📦 GENERAL'
     };
 
     // Group categories by zone
@@ -2340,6 +2320,16 @@ const App = () => {
         'Tiles': ['wall_tiles', 'feature_wall_tiles', 'floor_tiles'],
         'Other': ['accessory', 'drain', 'health_faucet']
       };
+
+      // Add custom categories to their own group
+      const customCatKeys = customCategories.map(c => {
+        const catName = typeof c === 'string' ? c : c.name;
+        return catName.toLowerCase().replace(/\s+/g, '_');
+      });
+      
+      if (customCatKeys.length > 0) {
+        categories['Custom'] = customCatKeys;
+      }
 
       const grouped = {};
       Object.entries(categories).forEach(([groupName, catKeys]) => {
@@ -3992,6 +3982,8 @@ const App = () => {
                     <option value="basin">Basin Zone</option>
                     <option value="wc">WC Zone</option>
                     <option value="shower">Shower Zone</option>
+                    <option value="accessories">Accessories Zone</option>
+                    <option value="tiles">Tiles Zone</option>
                     <option value="general">General</option>
                   </select>
                   <button
