@@ -1,11 +1,98 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" itemscope itemtype="https://schema.org/WebApplication">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bathroom Configurator</title>
+  
+  <!-- Primary Meta Tags -->
+  <title>Bathroom Configurator - Free Bathroom Planning & Procurement Tool</title>
+  <meta name="title" content="Bathroom Configurator - Free Bathroom Planning & Procurement Tool">
+  <meta name="description" content="Free bathroom configurator tool to plan, compare, and procure bathroom fittings. Compare multiple design options, track costs, generate procurement lists, and export reports. Perfect for homeowners, contractors, and interior designers.">
+  <meta name="keywords" content="bathroom configurator, bathroom planning, bathroom design, procurement tool, bathroom renovation, compare bathroom fittings, bathroom cost calculator, free bathroom planner">
+  <meta name="author" content="Pooja Sengupta">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://xtra-commerce.github.io/bathroom-configurator/">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://xtra-commerce.github.io/bathroom-configurator/">
+  <meta property="og:title" content="Bathroom Configurator - Free Bathroom Planning Tool">
+  <meta property="og:description" content="Plan, compare, and procure bathroom fittings with ease. Free tool for homeowners, contractors, and designers.">
+  <meta property="og:image" content="https://xtra-commerce.github.io/bathroom-configurator/og-image.png">
+  <meta property="og:site_name" content="Bathroom Configurator">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://xtra-commerce.github.io/bathroom-configurator/">
+  <meta property="twitter:title" content="Bathroom Configurator - Free Bathroom Planning Tool">
+  <meta property="twitter:description" content="Plan, compare, and procure bathroom fittings with ease. Free tool for homeowners, contractors, and designers.">
+  <meta property="twitter:image" content="https://xtra-commerce.github.io/bathroom-configurator/og-image.png">
+  
+  <!-- Schema.org Structured Data for AI/LLM -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Bathroom Configurator",
+    "applicationCategory": "DesignApplication",
+    "description": "Free bathroom planning and procurement tool. Compare multiple bathroom design options, track costs across products, generate procurement lists, and export PDF and Excel reports. Features auto-save, currency support, bulk editing, and custom categories.",
+    "url": "https://xtra-commerce.github.io/bathroom-configurator/",
+    "author": {
+      "@type": "Person",
+      "name": "Pooja Sengupta"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Compare multiple bathroom design options",
+      "Product database management",
+      "Cost tracking and calculation",
+      "Procurement list generation",
+      "PDF and Excel export",
+      "Auto-save functionality",
+      "Multi-currency support",
+      "Bulk editing",
+      "Custom categories",
+      "Bathroom render/photo uploads"
+    ],
+    "screenshot": "https://xtra-commerce.github.io/bathroom-configurator/screenshot.png",
+    "softwareVersion": "2.0",
+    "operatingSystem": "Web Browser",
+    "browserRequirements": "Requires JavaScript, supports React 18"
+  }
+  </script>
+  
+  <!-- AI/LLM Optimization - Semantic HTML hints -->
+  <meta name="application-name" content="Bathroom Configurator">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Bathroom Config">
+  
+  <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚿</text></svg>">
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- StatCounter -->
+  <script type="text/javascript">
+  var sc_project=13201711; 
+  var sc_invisible=1; 
+  var sc_security="a9cc5825"; 
+  </script>
+  <script type="text/javascript" src="https://www.statcounter.com/counter/counter.js" async></script>
+  <noscript>
+    <div class="statcounter">
+      <a title="Web Analytics" href="https://statcounter.com/" target="_blank">
+        <img class="statcounter" src="https://c.statcounter.com/13201711/0/a9cc5825/1/" alt="Web Analytics" referrerPolicy="no-referrer-when-downgrade">
+      </a>
+    </div>
+  </noscript>
 </head>
 <body>
   <div id="root"></div>
@@ -961,7 +1048,7 @@ const App = () => {
         {/* Navigation */}
         <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
           <div className="flex flex-wrap gap-2">
-            {['database', 'bathrooms', 'configure', 'final', 'summary', 'overview', 'procurement', 'settings'].map(v => (
+            {['database', 'bathrooms', 'configure', 'final', 'overview', 'summary', 'procurement', 'settings'].map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}
