@@ -173,6 +173,9 @@ const App = () => {
   const [deleteConfirmOption, setDeleteConfirmOption] = React.useState(null); // For option deletion confirmation
   const [notification, setNotification] = React.useState(null); // For success/error messages
   const [relatedItems, setRelatedItems] = React.useState(''); // For product dependencies
+  const [showOnboarding, setShowOnboarding] = React.useState(false); // For onboarding modal
+  const [showExportSummary, setShowExportSummary] = React.useState(false); // For pre-export check
+  const [exportType, setExportType] = React.useState(null); // 'excel' or 'pdf'
   const [customCategories, setCustomCategories] = React.useState([]); // User-defined categories [{name, zone}]
   const [currency, setCurrency] = React.useState('$'); // Currency symbol (default USD)
   const [currencyCode, setCurrencyCode] = React.useState('USD'); // Currency code (default USD)
@@ -287,27 +290,67 @@ const App = () => {
             }
             .grid { 
               display: grid; 
-              grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-              gap: 15px;
+              grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+              gap: 20px;
+              margin: 20px 0;
             }
             .grid > div { 
               margin-bottom: 0; 
-              border: 1px solid #666; 
-              padding: 12px; 
+              border: 2px solid #333; 
+              padding: 15px; 
               border-radius: 8px;
               page-break-inside: avoid;
             }
+            /* Option items displayed in 2-column grid for compact layout */
+            .space-y-4 { 
+              display: grid !important; 
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
+              margin: 15px 0 !important;
+            }
+            .space-y-4 > div {
+              border: 1px solid #ddd;
+              padding: 10px;
+              margin-bottom: 0 !important;
+              page-break-inside: avoid;
+            }
+            /* Make sure total cost section doesn't get gridded */
+            .bg-blue-50, .bg-gray-50 {
+              grid-column: 1 / -1;
+            }
+            .border-b { border-bottom: 1px solid #e5e7eb; }
+            .border-t { border-top: 1px solid #e5e7eb; }
+            .pb-4 { padding-bottom: 10px; }
+            .pt-4 { padding-top: 10px; }
             .shadow, .shadow-lg { box-shadow: none !important; border: 1px solid #ccc; }
             .rounded, .rounded-lg { border-radius: 8px; }
-            img { max-width: 100px; height: auto; display: inline-block; margin: 5px 0; }
+            img { max-width: 80px; max-height: 80px; height: auto; display: block; margin: 5px 0; object-fit: cover; }
             button { display: none !important; }
             .no-print { display: none !important; }
+            /* Compact text sizes */
+            .text-xs { font-size: 10px; }
+            .text-sm { font-size: 11px; }
+            .text-lg { font-size: 14px; }
+            .text-2xl { font-size: 18px; }
+            .text-3xl { font-size: 22px; }
+            .uppercase { text-transform: uppercase; }
+            .font-bold { font-weight: bold; }
+            .font-semibold { font-weight: 600; }
+            .line-clamp-2 { 
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+            }
             @media print {
               body { padding: 10px; }
               .page-break { page-break-before: always; }
               .print-button-container { display: none !important; }
-              table { font-size: 10px; }
-              th, td { padding: 6px 8px; }
+              table { font-size: 9px; }
+              th, td { padding: 4px 6px; }
+              .grid { gap: 15px; }
+              .space-y-4 { gap: 8px; }
+              img { max-width: 60px; max-height: 60px; }
             }
             @page { 
               margin: 1cm; 
@@ -550,6 +593,19 @@ const App = () => {
         welcomeSeen = await window.storage.get('welcome-seen');
       } catch (err) {
         debug(`Welcome check error: ${err.message}`);
+      }
+
+      // Check if user has seen onboarding
+      let onboardingSeen;
+      try {
+        onboardingSeen = await window.storage.get('onboarding-seen');
+      } catch (err) {
+        debug(`Onboarding check error: ${err.message}`);
+      }
+
+      if (!onboardingSeen) {
+        // First time - show onboarding modal
+        setShowOnboarding(true);
       }
 
       if (!welcomeSeen) {
@@ -802,6 +858,109 @@ const App = () => {
     debug('Deselected all items');
   };
 
+  // Calculate where a database item is used
+  const getItemUsage = (itemId) => {
+    const usage = [];
+    
+    bathrooms.forEach(bathroom => {
+      bathroom.options.forEach(option => {
+        Object.entries(option.selections || {}).forEach(([zone, selectedItem]) => {
+          if (selectedItem && selectedItem.item_id === itemId) {
+            // Convert zone name to readable format
+            const zoneName = zone.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            usage.push(`${bathroom.name} → ${option.name} → ${zoneName}`);
+          }
+        });
+      });
+    });
+    
+    return usage;
+  };
+
+  // Check if item will appear in Configure (category/type matching)
+  const willItemAppearInConfigure = (item) => {
+    // Items with no type or generic categories will always appear
+    if (!item.type || item.type === '' || item.category === 'general') return true;
+    
+    // For feature categories, check if bathroom has matching zone
+    const hasMatchingZone = bathrooms.some(bathroom => {
+      const features = bathroom.features || DEFAULT_FEATURES;
+      return features.some(f => {
+        // Match category to feature
+        if (item.category === 'basin' && f.id === 'basin') return true;
+        if (item.category === 'wc' && f.id === 'wc') return true;
+        if (item.category === 'shower' && f.id === 'shower') return true;
+        if (item.category === 'accessories' && f.id === 'accessories') return true;
+        if (['wall_tiles', 'floor_tiles', 'feature_wall_tiles'].includes(item.category) && f.id === 'tiles') return true;
+        return false;
+      });
+    });
+    
+    return hasMatchingZone;
+  };
+
+  // Analyze export completeness
+  const analyzeExportCompleteness = () => {
+    const analysis = {
+      totalBathrooms: bathrooms.length,
+      configuredBathrooms: 0,
+      missingSelections: [],
+      incompleteOptions: []
+    };
+
+    bathrooms.forEach(bathroom => {
+      const selectedOptionId = finalSelections[bathroom.id];
+      
+      if (!selectedOptionId) {
+        analysis.incompleteOptions.push({
+          bathroom: bathroom.name,
+          issue: 'No option selected'
+        });
+        return;
+      }
+
+      analysis.configuredBathrooms++;
+      
+      const selectedOption = bathroom.options.find(o => o.id === selectedOptionId);
+      if (selectedOption) {
+        const features = bathroom.features || DEFAULT_FEATURES;
+        features.forEach(feature => {
+          if (feature.id === 'tiles') {
+            // Check for wall tiles and floor tiles
+            const hasWallTiles = Object.keys(selectedOption.selections || {}).some(k => k === 'wall_tiles');
+            const hasFloorTiles = Object.keys(selectedOption.selections || {}).some(k => k === 'floor_tiles');
+            
+            if (!hasWallTiles) {
+              analysis.missingSelections.push({
+                bathroom: bathroom.name,
+                option: selectedOption.name,
+                zone: 'Wall Tiles',
+                required: true
+              });
+            }
+            if (!hasFloorTiles) {
+              analysis.missingSelections.push({
+                bathroom: bathroom.name,
+                option: selectedOption.name,
+                zone: 'Floor Tiles',
+                required: true
+              });
+            }
+          } else if (!selectedOption.selections || !selectedOption.selections[feature.id]) {
+            analysis.missingSelections.push({
+              bathroom: bathroom.name,
+              option: selectedOption.name,
+              zone: feature.name,
+              required: feature.id === 'basin' || feature.id === 'wc'
+            });
+          }
+        });
+      }
+    });
+
+    return analysis;
+  };
+
   const bulkUpdateCategory = async (newCategory) => {
     if (selectedItems.length === 0) {
       alert('No items selected');
@@ -996,8 +1155,11 @@ const App = () => {
           ...item,
           // Convert imageUrl to image_url if present
           image_url: item.image_url || item.imageUrl || '',
-          // Remove old imageUrl property if it exists
-          imageUrl: undefined
+          // Normalize price field: price → unit_price
+          unit_price: item.unit_price ?? item.price ?? null,
+          // Remove old properties
+          imageUrl: undefined,
+          price: undefined
         }));
         
         // Normalize bathrooms to ensure renders array exists
@@ -1742,7 +1904,8 @@ const App = () => {
     const calculateTotal = (option) => {
       let total = 0;
       Object.values(option.selections).forEach(item => {
-        if (item?.unit_price) total += item.unit_price;
+        const price = item?.unit_price ?? item?.price;
+        if (price) total += price;
       });
       return total;
     };
@@ -2014,7 +2177,7 @@ const App = () => {
                                     {categoryItems.map(item => (
                                       <option key={item.item_id} value={item.item_id}>
                                         {item.brand} - {item.model}
-                                        {item.unit_price ? ` (₹${item.unit_price})` : ''}
+                                        {(item.unit_price ?? item.price) ? ` (₹${(item.unit_price ?? item.price)})` : ''}
                                       </option>
                                     ))}
                                   </select>
@@ -2038,8 +2201,8 @@ const App = () => {
                                       {selected.description && (
                                         <p className="text-xs text-gray-700">{selected.description}</p>
                                       )}
-                                      {selected.unit_price && (
-                                        <p className="text-sm font-semibold mt-1">{currency}{selected.unit_price.toFixed(2)}</p>
+                                      {(selected.unit_price ?? selected.price) && (
+                                        <p className="text-sm font-semibold mt-1">{currency}{(selected.unit_price ?? selected.price).toFixed(2)}</p>
                                       )}
                                     </div>
                                     {!auto && (
@@ -2142,7 +2305,8 @@ const App = () => {
     const calculateTotal = (option) => {
       let total = 0;
       Object.values(option.selections).forEach(item => {
-        if (item?.unit_price) total += item.unit_price;
+        const price = item?.unit_price ?? item?.price;
+        if (price) total += price;
       });
       return total;
     };
@@ -2228,9 +2392,9 @@ const App = () => {
                             {item.description && (
                               <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
                             )}
-                            {item.unit_price && (
+                            {(item.unit_price ?? item.price) && (
                               <p className="text-lg font-semibold text-blue-600 mt-1">
-                                {currency}{item.unit_price.toFixed(2)}
+                                {currency}{(item.unit_price ?? item.price).toFixed(2)}
                               </p>
                             )}
                           </div>
@@ -2287,7 +2451,8 @@ const App = () => {
     const calculateOptionTotal = (option) => {
       let total = 0;
       Object.values(option.selections).forEach(item => {
-        if (item?.unit_price) total += item.unit_price;
+        const price = item?.unit_price ?? item?.price;
+        if (price) total += price;
       });
       return total;
     };
@@ -2442,9 +2607,9 @@ const App = () => {
                                         </p>
                                         <p className="font-bold text-sm text-gray-900 truncate">{item.brand}</p>
                                         <p className="text-xs text-gray-600 truncate">{item.model}</p>
-                                        {item.unit_price && (
+                                        {(item.unit_price ?? item.price) && (
                                           <p className="text-sm font-semibold text-blue-600 mt-1">
-                                            {currency}{item.unit_price.toLocaleString('en-IN')}
+                                            {currency}{(item.unit_price ?? item.price).toLocaleString('en-IN')}
                                           </p>
                                         )}
                                       </div>
@@ -2594,7 +2759,10 @@ const App = () => {
     const brandGroups = Object.entries(groupedByBrand).filter(([key]) => key !== 'TILES');
 
     const totalCost = procurementList.reduce(
-      (sum, item) => sum + (item.unit_price ? item.unit_price * item.quantity : 0),
+      (sum, item) => {
+        const price = item.unit_price ?? item.price;
+        return sum + (price ? price * item.quantity : 0);
+      },
       0
     );
 
@@ -2616,15 +2784,16 @@ const App = () => {
         
         Object.entries(groupedByBrand).forEach(([brand, brandItems]) => {
           brandItems.forEach(item => {
+            const price = item.unit_price ?? item.price;
             excelData.push({
               Brand: brand,
               Model: item.model,
               Category: item.category,
               'Used In': item.bathrooms.join(', '),
               Quantity: item.quantity,
-              'Unit Price': showPrices ? (item.unit_price || 'TBA') : '-',
+              'Unit Price': showPrices ? (price || 'TBA') : '-',
               'Total Price': showPrices
-                ? (item.unit_price ? item.unit_price * item.quantity : 'TBA')
+                ? (price ? price * item.quantity : 'TBA')
                 : '-'
             });
           });
@@ -2671,7 +2840,10 @@ const App = () => {
               Show Prices
             </label>
             <button
-              onClick={() => exportToPDF('Procurement', 'procurement-content')}
+              onClick={() => {
+                setExportType('pdf');
+                setShowExportSummary(true);
+              }}
               className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2"
               title="Export to PDF"
             >
@@ -2679,7 +2851,10 @@ const App = () => {
               Export PDF
             </button>
             <button
-              onClick={exportToExcel}
+              onClick={() => {
+                setExportType('excel');
+                setShowExportSummary(true);
+              }}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
               📥
@@ -2721,13 +2896,13 @@ const App = () => {
                         <td className="px-4 py-2 text-center font-semibold">{item.quantity}</td>
                         {showPrices && (
                           <td className="px-4 py-2 text-right">
-                            {item.unit_price ? `₹${item.unit_price.toFixed(2)}` : 'TBA'}
+                            {(item.unit_price ?? item.price) ? `₹${(item.unit_price ?? item.price).toFixed(2)}` : 'TBA'}
                           </td>
                         )}
                         {showPrices && (
                           <td className="px-4 py-2 text-right font-semibold">
-                            {item.unit_price
-                              ? `₹${(item.unit_price * item.quantity).toFixed(2)}`
+                            {(item.unit_price ?? item.price)
+                              ? `₹${((item.unit_price ?? item.price) * item.quantity).toFixed(2)}`
                               : 'TBA'}
                           </td>
                         )}
@@ -2774,13 +2949,13 @@ const App = () => {
                         <td className="px-4 py-2 text-center font-semibold">{item.quantity}</td>
                         {showPrices && (
                           <td className="px-4 py-2 text-right">
-                            {item.unit_price ? `₹${item.unit_price.toFixed(2)}` : 'TBA'}
+                            {(item.unit_price ?? item.price) ? `₹${(item.unit_price ?? item.price).toFixed(2)}` : 'TBA'}
                           </td>
                         )}
                         {showPrices && (
                           <td className="px-4 py-2 text-right font-semibold">
-                            {item.unit_price
-                              ? `₹${(item.unit_price * item.quantity).toFixed(2)}`
+                            {(item.unit_price ?? item.price)
+                              ? `₹${((item.unit_price ?? item.price) * item.quantity).toFixed(2)}`
                               : 'TBA'}
                           </td>
                         )}
@@ -2976,6 +3151,210 @@ const App = () => {
         </div>
       )}
 
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Welcome to Bathroom Configurator! 🛁</h2>
+                <button
+                  onClick={async () => {
+                    setShowOnboarding(false);
+                    try {
+                      await window.storage.set('onboarding-seen', { value: 'true' });
+                    } catch (err) {
+                      debug(`Failed to save onboarding state: ${err.message}`);
+                    }
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  This tool helps you compare bathroom options and generate procurement lists efficiently.
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                      1
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Build or Import Database</h3>
+                      <p className="text-gray-600 text-sm">
+                        Add products manually or import from backup. Organize items by category (basin, WC, tiles, etc.)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                      2
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Create Bathrooms and Options</h3>
+                      <p className="text-gray-600 text-sm">
+                        Define bathroom zones and create multiple options to compare. Select products for each zone.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                      3
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Compare Costs and Export</h3>
+                      <p className="text-gray-600 text-sm">
+                        Review options side-by-side, select final choices, generate procurement lists and export to Excel or PDF.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tips */}
+                <div className="bg-blue-50 border border-blue-200 rounded p-4 mt-4">
+                  <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Tips</h3>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Use the Database tab to manage your product library</li>
+                    <li>• Create bathrooms in Configure tab to organize zones</li>
+                    <li>• Compare options in Overview tab before finalizing</li>
+                    <li>• Export procurement lists when ready to order</li>
+                    <li>• Data auto-saves to browser storage</li>
+                  </ul>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    setShowOnboarding(false);
+                    try {
+                      await window.storage.set('onboarding-seen', { value: 'true' });
+                    } catch (err) {
+                      debug(`Failed to save onboarding state: ${err.message}`);
+                    }
+                  }}
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                >
+                  Get Started
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Summary Modal */}
+      {showExportSummary && (() => {
+        const analysis = analyzeExportCompleteness();
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Export Summary 📊</h2>
+                  <button
+                    onClick={() => setShowExportSummary(false)}
+                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Summary Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="bg-blue-50 p-4 rounded-lg text-center">
+                    <div className="text-3xl font-bold text-blue-900">{analysis.totalBathrooms}</div>
+                    <div className="text-sm text-blue-700">Total Bathrooms</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg text-center">
+                    <div className="text-3xl font-bold text-green-900">{analysis.configuredBathrooms}</div>
+                    <div className="text-sm text-green-700">Configured</div>
+                  </div>
+                  <div className="bg-yellow-50 p-4 rounded-lg text-center">
+                    <div className="text-3xl font-bold text-yellow-900">{analysis.missingSelections.length}</div>
+                    <div className="text-sm text-yellow-700">Missing Items</div>
+                  </div>
+                </div>
+
+                {/* Incomplete Options */}
+                {analysis.incompleteOptions.length > 0 && (
+                  <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-red-900 mb-3">⚠️ Incomplete Configurations</h3>
+                    <ul className="space-y-2">
+                      {analysis.incompleteOptions.map((item, idx) => (
+                        <li key={idx} className="text-sm text-red-800">
+                          • <strong>{item.bathroom}</strong>: {item.issue}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Missing Selections */}
+                {analysis.missingSelections.length > 0 && (
+                  <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-yellow-900 mb-3">📋 Missing Selections</h3>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {analysis.missingSelections.map((item, idx) => (
+                        <div key={idx} className="text-sm bg-white p-2 rounded border border-yellow-200">
+                          <strong>{item.bathroom}</strong> → {item.option} → 
+                          <span className={item.required ? 'text-red-700 font-semibold' : 'text-yellow-700'}>
+                            {' '}{item.zone} {item.required && '(Required)'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* All Clear Message */}
+                {analysis.incompleteOptions.length === 0 && analysis.missingSelections.length === 0 && (
+                  <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                    <div className="text-4xl mb-2">✅</div>
+                    <h3 className="font-semibold text-green-900 mb-2">All Set!</h3>
+                    <p className="text-sm text-green-800">All bathrooms are fully configured and ready to export.</p>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowExportSummary(false)}
+                    className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowExportSummary(false);
+                      if (exportType === 'excel') {
+                        exportToExcel();
+                      } else if (exportType === 'pdf') {
+                        exportToPDF('Procurement', 'procurement-content');
+                      }
+                    }}
+                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                  >
+                    Proceed with Export
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-4 text-center">
+                  Note: You can export even with missing items. This is just a completeness check.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="bg-white shadow-md mb-6">
         {/* Main Header */}
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -3026,7 +3405,7 @@ const App = () => {
               </div>
               <button
                 onClick={() => {
-                  setView('help');
+                  setShowOnboarding(true);
                   if (typeof window !== 'undefined' && window.sc_log_pv) {
                     try { window.sc_log_pv(); } catch(e) {}
                   }
@@ -3231,10 +3610,10 @@ const App = () => {
               onClick={() => setView('database')}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg"
             >
-              🚀 Start Building Your Database
+              🚀 Get Started
             </button>
             <p className="text-sm text-gray-500 mt-4">
-              Need help? Check the <button onClick={() => setView('help')} className="text-blue-600 hover:underline font-semibold">Help</button> tab anytime
+              Need help? Check the <button onClick={() => setShowOnboarding(true)} className="text-blue-600 hover:underline font-semibold">Help</button> anytime
             </p>
           </div>
         </div>
@@ -3747,6 +4126,7 @@ const App = () => {
                       <th className="px-4 py-2 text-left">Model</th>
                       <th className="px-4 py-2 text-left">Type</th>
                       <th className="px-4 py-2 text-left">Price</th>
+                      <th className="px-4 py-2 text-left">Used In</th>
                       {!bulkEditMode && <th className="px-4 py-2 text-left">Actions</th>}
                     </tr>
                   </thead>
@@ -3799,7 +4179,35 @@ const App = () => {
                         <td className="px-4 py-2">{item.model}</td>
                         <td className="px-4 py-2 text-sm">{item.type || '-'}</td>
                         <td className="px-4 py-2">
-                          {item.unit_price ? `${currency}${item.unit_price.toFixed(2)}` : 'TBA'}
+                          {(item.unit_price ?? item.price) ? `${currency}${(item.unit_price ?? item.price).toFixed(2)}` : 'TBA'}
+                        </td>
+                        <td className="px-4 py-2 text-sm">
+                          {(() => {
+                            const usage = getItemUsage(item.item_id);
+                            const willAppear = willItemAppearInConfigure(item);
+                            
+                            if (usage.length > 0) {
+                              return (
+                                <div>
+                                  {usage.map((loc, idx) => (
+                                    <div key={idx} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mb-1 inline-block mr-1">
+                                      {loc}
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            } else if (!willAppear) {
+                              return (
+                                <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded inline-block">
+                                  ⚠️ Won't appear in Configure (no matching zone)
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <span className="text-gray-400 text-xs italic">Not used yet</span>
+                              );
+                            }
+                          })()}
                         </td>
                         {!bulkEditMode && (
                           <td className="px-4 py-2">
