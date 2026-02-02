@@ -88,21 +88,7 @@
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- StatCounter Analytics -->
-  <script type="text/javascript">
-  var sc_project=13201711; 
-  var sc_invisible=1; 
-  var sc_security="a9cc5825"; 
-  </script>
-  <script type="text/javascript" src="https://www.statcounter.com/counter/counter.js" async></script>
-  <noscript>
-    <div class="statcounter">
-      <a title="Web Analytics" href="https://statcounter.com/" target="_blank">
-        <img class="statcounter" src="https://c.statcounter.com/13201711/0/a9cc5825/1/" alt="Web Analytics" referrerPolicy="no-referrer-when-downgrade">
-      </a>
-    </div>
-  </noscript>
+
 </head>
 <body>
   <div id="root"></div>
@@ -1576,6 +1562,7 @@ const App = () => {
       'shower': '🚿 SHOWER ZONE',
       'accessories': '🔧 ACCESSORIES ZONE',
       'tiles': '🏗️ TILES ZONE',
+      'lighting': '💡 LIGHTING ZONE',
       'general': '📦 GENERAL'
     };
 
@@ -3561,6 +3548,19 @@ const App = () => {
                     <option value="feature_wall_tiles">Feature Wall Tiles</option>
                     <option value="floor_tiles">Floor Tiles</option>
                   </optgroup>
+                  {customCategories.length > 0 && (
+                    <optgroup label="📦 CUSTOM CATEGORIES">
+                      {customCategories.map((cat, idx) => {
+                        const catName = typeof cat === 'string' ? cat : cat.name;
+                        const catKey = catName.toLowerCase().replace(/\s+/g, '_');
+                        return (
+                          <option key={idx} value={catKey}>
+                            {catName}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  )}
                 </select>
               </div>
               
@@ -3977,13 +3977,16 @@ const App = () => {
                   />
                   <select
                     id="new-category-zone"
+                    defaultValue=""
                     className="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-purple-500 focus:outline-none"
                   >
+                    <option value="" disabled>Select Zone *</option>
                     <option value="basin">Basin Zone</option>
                     <option value="wc">WC Zone</option>
                     <option value="shower">Shower Zone</option>
                     <option value="accessories">Accessories Zone</option>
                     <option value="tiles">Tiles Zone</option>
+                    <option value="lighting">Lighting Zone</option>
                     <option value="general">General</option>
                   </select>
                   <button
@@ -3992,15 +3995,29 @@ const App = () => {
                       const zoneSelect = document.getElementById('new-category-zone');
                       const newCat = nameInput.value.trim();
                       const newZone = zoneSelect.value;
-                      if (newCat && !customCategories.some(c => (typeof c === 'string' ? c : c.name) === newCat)) {
+                      
+                      // Validate inputs
+                      if (!newCat) {
+                        setNotification({ type: 'error', message: 'Please enter a category name' });
+                        setTimeout(() => setNotification(null), 2000);
+                        return;
+                      }
+                      if (!newZone) {
+                        setNotification({ type: 'error', message: 'Please select a zone' });
+                        setTimeout(() => setNotification(null), 2000);
+                        return;
+                      }
+                      
+                      if (!customCategories.some(c => (typeof c === 'string' ? c : c.name) === newCat)) {
                         const updated = [...customCategories, { name: newCat, zone: newZone }];
                         setCustomCategories(updated);
                         await saveToStorage({ categories: updated });
                         debug(`Added custom category: ${newCat} (${newZone})`);
                         nameInput.value = '';
+                        zoneSelect.value = '';
                         setNotification({ type: 'success', message: `Category "${newCat}" added!` });
                         setTimeout(() => setNotification(null), 2000);
-                      } else if (customCategories.some(c => (typeof c === 'string' ? c : c.name) === newCat)) {
+                      } else {
                         setNotification({ type: 'error', message: `Category "${newCat}" already exists` });
                         setTimeout(() => setNotification(null), 2000);
                       }
@@ -4327,5 +4344,20 @@ const App = () => {
 
 ReactDOM.render(<App />, document.getElementById('root'));
   </script>
+  
+  <!-- StatCounter Analytics (synchronous) -->
+  <script type="text/javascript">
+  var sc_project=13201711; 
+  var sc_invisible=1; 
+  var sc_security="a9cc5825"; 
+  </script>
+  <script type="text/javascript" src="https://www.statcounter.com/counter/counter.js"></script>
+  <noscript>
+    <div class="statcounter">
+      <a title="Web Analytics" href="https://statcounter.com/" target="_blank">
+        <img class="statcounter" src="https://c.statcounter.com/13201711/0/a9cc5825/1/" alt="Web Analytics" referrerPolicy="no-referrer-when-downgrade">
+      </a>
+    </div>
+  </noscript>
 </body>
 </html>
