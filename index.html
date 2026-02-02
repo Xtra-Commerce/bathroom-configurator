@@ -301,6 +301,10 @@ const App = () => {
               border-radius: 8px;
               page-break-inside: avoid;
             }
+            /* Start each option on a new page (except first) */
+            .grid > div:not(:first-child) {
+              page-break-before: always;
+            }
             /* Option items displayed in 2-column grid for compact layout */
             .space-y-4 { 
               display: grid !important; 
@@ -349,6 +353,7 @@ const App = () => {
               table { font-size: 9px; }
               th, td { padding: 4px 6px; }
               .grid { gap: 15px; }
+              .grid > div:not(:first-child) { page-break-before: always; }
               .space-y-4 { gap: 8px; }
               img { max-width: 60px; max-height: 60px; }
             }
@@ -3437,7 +3442,7 @@ const App = () => {
               </div>
               <button
                 onClick={() => {
-                  setShowOnboarding(true);
+                  setView('help');
                   if (typeof window !== 'undefined' && window.sc_log_pv) {
                     try { window.sc_log_pv(); } catch(e) {}
                   }
@@ -3645,7 +3650,7 @@ const App = () => {
               🚀 Get Started
             </button>
             <p className="text-sm text-gray-500 mt-4">
-              Need help? Check the <button onClick={() => setShowOnboarding(true)} className="text-blue-600 hover:underline font-semibold">Help</button> anytime
+              Need help? Check the <button onClick={() => setView('help')} className="text-blue-600 hover:underline font-semibold">Help</button> anytime
             </p>
           </div>
         </div>
@@ -3927,10 +3932,26 @@ const App = () => {
                     <option value="basin">Basin</option>
                     <option value="mixer">Basin Mixer</option>
                     <option value="concealed_body">Concealed Body</option>
+                    {customCategories.filter(cat => {
+                      const zone = typeof cat === 'string' ? null : cat.zone;
+                      return zone === 'basin';
+                    }).map((cat, idx) => {
+                      const catName = typeof cat === 'string' ? cat : cat.name;
+                      const catKey = catName.toLowerCase().replace(/\s+/g, '_');
+                      return <option key={idx} value={catKey}>{catName}</option>;
+                    })}
                   </optgroup>
                   <optgroup label="🚽 WC ZONE">
                     <option value="wc">WC</option>
                     <option value="health_faucet">Health Faucet</option>
+                    {customCategories.filter(cat => {
+                      const zone = typeof cat === 'string' ? null : cat.zone;
+                      return zone === 'wc';
+                    }).map((cat, idx) => {
+                      const catName = typeof cat === 'string' ? cat : cat.name;
+                      const catKey = catName.toLowerCase().replace(/\s+/g, '_');
+                      return <option key={idx} value={catKey}>{catName}</option>;
+                    })}
                   </optgroup>
                   <optgroup label="🚿 SHOWER ZONE">
                     <option value="hand_shower">Hand Shower</option>
@@ -3943,6 +3964,14 @@ const App = () => {
                     <option value="diverter_concealed_body">Diverter Concealed Body</option>
                     <option value="shower_panel">Shower Panel</option>
                     <option value="geyser">Geyser</option>
+                    {customCategories.filter(cat => {
+                      const zone = typeof cat === 'string' ? null : cat.zone;
+                      return zone === 'shower';
+                    }).map((cat, idx) => {
+                      const catName = typeof cat === 'string' ? cat : cat.name;
+                      const catKey = catName.toLowerCase().replace(/\s+/g, '_');
+                      return <option key={idx} value={catKey}>{catName}</option>;
+                    })}
                   </optgroup>
                   <optgroup label="🔧 ACCESSORIES ZONE">
                     <option value="shower_drain">Shower Drain</option>
@@ -3953,22 +3982,55 @@ const App = () => {
                     <option value="robe_hook">Robe Hook</option>
                     <option value="drain">Drain</option>
                     <option value="accessory">Other Accessory</option>
+                    {customCategories.filter(cat => {
+                      const zone = typeof cat === 'string' ? null : cat.zone;
+                      return zone === 'accessories';
+                    }).map((cat, idx) => {
+                      const catName = typeof cat === 'string' ? cat : cat.name;
+                      const catKey = catName.toLowerCase().replace(/\s+/g, '_');
+                      return <option key={idx} value={catKey}>{catName}</option>;
+                    })}
                   </optgroup>
                   <optgroup label="🏗️ TILES ZONE">
                     <option value="wall_tiles">Wall Tiles</option>
                     <option value="feature_wall_tiles">Feature Wall Tiles</option>
                     <option value="floor_tiles">Floor Tiles</option>
+                    {customCategories.filter(cat => {
+                      const zone = typeof cat === 'string' ? null : cat.zone;
+                      return zone === 'tiles';
+                    }).map((cat, idx) => {
+                      const catName = typeof cat === 'string' ? cat : cat.name;
+                      const catKey = catName.toLowerCase().replace(/\s+/g, '_');
+                      return <option key={idx} value={catKey}>{catName}</option>;
+                    })}
                   </optgroup>
-                  {customCategories.length > 0 && (
-                    <optgroup label="📦 CUSTOM CATEGORIES">
-                      {customCategories.map((cat, idx) => {
+                  {customCategories.some(cat => {
+                    const zone = typeof cat === 'string' ? null : cat.zone;
+                    return zone === 'lighting';
+                  }) && (
+                    <optgroup label="💡 LIGHTING ZONE">
+                      {customCategories.filter(cat => {
+                        const zone = typeof cat === 'string' ? null : cat.zone;
+                        return zone === 'lighting';
+                      }).map((cat, idx) => {
                         const catName = typeof cat === 'string' ? cat : cat.name;
                         const catKey = catName.toLowerCase().replace(/\s+/g, '_');
-                        return (
-                          <option key={idx} value={catKey}>
-                            {catName}
-                          </option>
-                        );
+                        return <option key={idx} value={catKey}>{catName}</option>;
+                      })}
+                    </optgroup>
+                  )}
+                  {customCategories.some(cat => {
+                    const zone = typeof cat === 'string' ? null : cat.zone;
+                    return zone === 'general' || !zone;
+                  }) && (
+                    <optgroup label="📦 GENERAL">
+                      {customCategories.filter(cat => {
+                        const zone = typeof cat === 'string' ? null : cat.zone;
+                        return zone === 'general' || !zone;
+                      }).map((cat, idx) => {
+                        const catName = typeof cat === 'string' ? cat : cat.name;
+                        const catKey = catName.toLowerCase().replace(/\s+/g, '_');
+                        return <option key={idx} value={catKey}>{catName}</option>;
                       })}
                     </optgroup>
                   )}
@@ -4630,6 +4692,20 @@ const App = () => {
           <h2 className="text-3xl font-bold mb-6">❓ Help & Guide</h2>
           
           <div className="space-y-6">
+            {/* Onboarding */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-lg p-6">
+              <h3 className="text-2xl font-bold mb-3">🛁 New to Bathroom Configurator?</h3>
+              <p className="mb-4 text-blue-100">
+                Learn how to use this tool with our interactive onboarding guide.
+              </p>
+              <button
+                onClick={() => setShowOnboarding(true)}
+                className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+              >
+                Launch Onboarding Guide
+              </button>
+            </div>
+
             {/* Quick Start */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-2xl font-bold mb-4 text-blue-600">🚀 Quick Start</h3>
