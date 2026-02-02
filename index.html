@@ -173,6 +173,9 @@ const App = () => {
   const [deleteConfirmOption, setDeleteConfirmOption] = React.useState(null); // For option deletion confirmation
   const [notification, setNotification] = React.useState(null); // For success/error messages
   const [relatedItems, setRelatedItems] = React.useState(''); // For product dependencies
+  const [vendorName, setVendorName] = React.useState(''); // Vendor name
+  const [vendorQuoteRef, setVendorQuoteRef] = React.useState(''); // Vendor quote reference
+  const [vendorLink, setVendorLink] = React.useState(''); // Vendor link or contact
   const [showOnboarding, setShowOnboarding] = React.useState(false); // For onboarding modal
   const [showExportSummary, setShowExportSummary] = React.useState(false); // For pre-export check
   const [exportType, setExportType] = React.useState(null); // 'excel' or 'pdf'
@@ -181,6 +184,8 @@ const App = () => {
   const [currencyCode, setCurrencyCode] = React.useState('USD'); // Currency code (default USD)
   const [showCurrencySetup, setShowCurrencySetup] = React.useState(false); // Show currency selection on first load
   const [showIntroduction, setShowIntroduction] = React.useState(false); // Show welcome introduction
+  const [comparisonBaseline, setComparisonBaseline] = React.useState(null); // Baseline option for comparison
+  const [procurementViewMode, setProcurementViewMode] = React.useState('items'); // 'items' or 'vendors'
 
   const defaultCats = ['basin', 'wc', 'hand_shower', 'hand_shower_hose', 'hand_shower_outlet', 'hand_shower_rail', 'overhead_shower', 'mixer', 'concealed_body', 'diverter', 'diverter_concealed_body', 'shower_panel', 'geyser', 'shower_drain', 'floor_drain_wc', 'toilet_paper_holder', 'hand_towel_rail', 'towel_rack', 'robe_hook', 'accessory', 'drain', 'health_faucet', 'wall_tiles', 'feature_wall_tiles', 'floor_tiles'];
   
@@ -691,6 +696,9 @@ const App = () => {
     setPrice('');
     setImageUrl('');
     setRelatedItems('');
+    setVendorName('');
+    setVendorQuoteRef('');
+    setVendorLink('');
     setEditingId(null);
     setUploadedImage(null);
     debug('Form cleared');
@@ -743,7 +751,10 @@ const App = () => {
       unit_price: price ? parseFloat(price) : null,
       image_url: imageUrl,
       image_data: uploadedImage || null,
-      related_items: relatedItems ? relatedItems.split(',').map(s => s.trim()).filter(Boolean) : []
+      related_items: relatedItems ? relatedItems.split(',').map(s => s.trim()).filter(Boolean) : [],
+      vendor_name: vendorName || '',
+      vendor_quote_ref: vendorQuoteRef || '',
+      vendor_link: vendorLink || ''
     };
     
     const newItems = [...items, item];
@@ -779,7 +790,10 @@ const App = () => {
       unit_price: price ? parseFloat(price) : null,
       image_url: imageUrl,
       image_data: uploadedImage || null,
-      related_items: relatedItems ? relatedItems.split(',').map(s => s.trim()).filter(Boolean) : []
+      related_items: relatedItems ? relatedItems.split(',').map(s => s.trim()).filter(Boolean) : [],
+      vendor_name: vendorName || '',
+      vendor_quote_ref: vendorQuoteRef || '',
+      vendor_link: vendorLink || ''
     } : i);
     
     setItems(newItems);
@@ -806,6 +820,9 @@ const App = () => {
     setImageUrl(item.image_url || '');
     setUploadedImage(item.image_data || null);
     setRelatedItems(item.related_items ? item.related_items.join(', ') : '');
+    setVendorName(item.vendor_name || '');
+    setVendorQuoteRef(item.vendor_quote_ref || '');
+    setVendorLink(item.vendor_link || '');
     setEditingId(item.item_id);
     
     setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
@@ -2419,6 +2436,108 @@ const App = () => {
             );
           })}
         </div>
+
+        {/* Option Comparison Section */}
+        {selectedBathroom.options.length > 1 && (
+          <div className="mt-8 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-lg p-6 border-2 border-green-200">
+            <h3 className="text-2xl font-bold mb-4 text-gray-900">💰 Cost Comparison</h3>
+            
+            <div className="mb-4">
+              <label className="block font-semibold mb-2 text-gray-700">Select Baseline for Comparison:</label>
+              <select
+                value={comparisonBaseline || ''}
+                onChange={(e) => setComparisonBaseline(e.target.value || null)}
+                className="border-2 border-gray-300 rounded-lg px-4 py-2 w-full max-w-md focus:border-blue-500 focus:outline-none"
+              >
+                <option value="">-- Select Option to Compare Against --</option>
+                {selectedBathroom.options.map(option => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {comparisonBaseline && (() => {
+              const baseline = selectedBathroom.options.find(o => o.id === comparisonBaseline);
+              if (!baseline) return null;
+              
+              const baselineTotal = calculateTotal(baseline);
+              
+              return (
+                <div className="space-y-4">
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-300">
+                    <h4 className="font-bold text-lg mb-2">Baseline: {baseline.name}</h4>
+                    <p className="text-2xl font-bold text-gray-900">{currency}{baselineTotal.toFixed(2)}</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {selectedBathroom.options.filter(opt => opt.id !== comparisonBaseline).map(option => {
+                      const optionTotal = calculateTotal(option);
+                      const delta = optionTotal - baselineTotal;
+                      const isHigher = delta > 0;
+                      const isLower = delta < 0;
+                      
+                      // Calculate per-category deltas
+                      const categoryDeltas = {};
+                      const allCategories = new Set([
+                        ...Object.keys(baseline.selections || {}),
+                        ...Object.keys(option.selections || {})
+                      ]);
+                      
+                      allCategories.forEach(category => {
+                        const baseItem = baseline.selections?.[category];
+                        const optItem = option.selections?.[category];
+                        const basePrice = baseItem?.unit_price ?? baseItem?.price ?? 0;
+                        const optPrice = optItem?.unit_price ?? optItem?.price ?? 0;
+                        const catDelta = optPrice - basePrice;
+                        if (catDelta !== 0) {
+                          categoryDeltas[category] = catDelta;
+                        }
+                      });
+                      
+                      return (
+                        <div key={option.id} className={`bg-white rounded-lg p-4 border-2 ${
+                          isHigher ? 'border-red-300' : isLower ? 'border-green-300' : 'border-gray-300'
+                        }`}>
+                          <h5 className="font-bold text-lg mb-2">{option.name}</h5>
+                          <div className="mb-3">
+                            <p className="text-sm text-gray-600">Total Cost</p>
+                            <p className="text-xl font-bold">{currency}{optionTotal.toFixed(2)}</p>
+                          </div>
+                          <div className={`text-2xl font-bold mb-3 ${
+                            isHigher ? 'text-red-600' : isLower ? 'text-green-600' : 'text-gray-600'
+                          }`}>
+                            {isHigher && '+'}{delta.toFixed(2)}
+                            <span className="text-sm ml-1">vs baseline</span>
+                          </div>
+                          
+                          {Object.keys(categoryDeltas).length > 0 && (
+                            <div className="border-t pt-3 mt-3">
+                              <p className="text-xs font-semibold text-gray-600 mb-2">Category Deltas:</p>
+                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                                {Object.entries(categoryDeltas).map(([cat, catDelta]) => (
+                                  <div key={cat} className="flex justify-between text-xs">
+                                    <span className="text-gray-700 truncate">{cat.replace(/_/g, ' ')}</span>
+                                    <span className={`font-semibold ml-2 ${
+                                      catDelta > 0 ? 'text-red-600' : 'text-green-600'
+                                    }`}>
+                                      {catDelta > 0 && '+'}{catDelta.toFixed(2)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
       </div>
     );
   };
@@ -2709,11 +2828,15 @@ const App = () => {
               if (existing) {
                 existing.quantity += 1;
                 existing.bathrooms.push(bathroom.name);
+                existing.options.push(selectedOption.name);
+                existing.categories.push(category);
               } else {
                 procurementList.push({
                   ...item,
                   quantity: 1,
-                  bathrooms: [bathroom.name]
+                  bathrooms: [bathroom.name],
+                  options: [selectedOption.name],
+                  categories: [category]
                 });
               }
             }
@@ -2722,6 +2845,7 @@ const App = () => {
       }
     });
 
+    // Group by brand (existing behavior)
     const groupedByBrand = procurementList.reduce((acc, item) => {
       const isTile = ['wall_tiles', 'feature_wall_tiles', 'floor_tiles'].includes(item.category);
       const key = isTile ? 'TILES' : (item.brand || 'Other');
@@ -2730,9 +2854,23 @@ const App = () => {
       return acc;
     }, {});
 
+    // Group by vendor (new behavior)
+    const groupedByVendor = procurementList.reduce((acc, item) => {
+      const key = item.vendor_name || 'Unassigned Vendor';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+
     // Separate tiles and brands for better display
     const tilesGroup = groupedByBrand['TILES'] || [];
     const brandGroups = Object.entries(groupedByBrand).filter(([key]) => key !== 'TILES');
+    const vendorGroups = Object.entries(groupedByVendor).sort(([a], [b]) => {
+      // Sort: assigned vendors first, then "Unassigned Vendor"
+      if (a === 'Unassigned Vendor') return 1;
+      if (b === 'Unassigned Vendor') return -1;
+      return a.localeCompare(b);
+    });
 
     const totalCost = procurementList.reduce(
       (sum, item) => {
@@ -2758,34 +2896,104 @@ const App = () => {
 
         const excelData = [];
         
-        Object.entries(groupedByBrand).forEach(([brand, brandItems]) => {
-          brandItems.forEach(item => {
-            const price = item.unit_price ?? item.price;
+        if (procurementViewMode === 'vendors') {
+          // Export by vendors
+          vendorGroups.forEach(([vendor, vendorItems]) => {
             excelData.push({
-              Brand: brand,
-              Model: item.model,
-              Category: item.category,
-              'Used In': item.bathrooms.join(', '),
-              Quantity: item.quantity,
-              'Unit Price': showPrices ? (price || 'TBA') : '-',
-              'Total Price': showPrices
-                ? (price ? price * item.quantity : 'TBA')
-                : '-'
+              Vendor: `===== ${vendor} =====`,
+              Brand: '',
+              Model: '',
+              Bathroom: '',
+              Option: '',
+              Category: '',
+              Quantity: '',
+              'Unit Price': '',
+              'Total Price': ''
+            });
+            
+            vendorItems.forEach(item => {
+              const price = item.unit_price ?? item.price;
+              excelData.push({
+                Vendor: '',
+                Brand: item.brand,
+                Model: item.model,
+                Bathroom: item.bathrooms.join(', '),
+                Option: item.options.join(', '),
+                Category: item.category,
+                Quantity: item.quantity,
+                'Unit Price': showPrices ? (price || 'TBA') : '-',
+                'Total Price': showPrices
+                  ? (price ? price * item.quantity : 'TBA')
+                  : '-'
+              });
+            });
+            
+            if (showPrices) {
+              const vendorTotal = vendorItems.reduce((sum, item) => {
+                const price = item.unit_price ?? item.price;
+                return sum + (price ? price * item.quantity : 0);
+              }, 0);
+              
+              excelData.push({
+                Vendor: '',
+                Brand: '',
+                Model: '',
+                Bathroom: '',
+                Option: '',
+                Category: '',
+                Quantity: '',
+                'Unit Price': `${vendor} Subtotal`,
+                'Total Price': vendorTotal
+              });
+            }
+            
+            excelData.push({});
+          });
+        } else {
+          // Export by brands (existing behavior)
+          Object.entries(groupedByBrand).forEach(([brand, brandItems]) => {
+            brandItems.forEach(item => {
+              const price = item.unit_price ?? item.price;
+              excelData.push({
+                Brand: brand,
+                Model: item.model,
+                Category: item.category,
+                'Used In': item.bathrooms.join(', '),
+                Quantity: item.quantity,
+                'Unit Price': showPrices ? (price || 'TBA') : '-',
+                'Total Price': showPrices
+                  ? (price ? price * item.quantity : 'TBA')
+                  : '-'
+              });
             });
           });
-        });
+        }
 
         if (showPrices) {
           excelData.push({});
-          excelData.push({
-            Brand: '',
-            Model: '',
-            Category: '',
-            'Used In': '',
-            Quantity: '',
-            'Unit Price': 'GRAND TOTAL',
-            'Total Price': totalCost
-          });
+          if (procurementViewMode === 'vendors') {
+            excelData.push({
+              Vendor: '',
+              Brand: '',
+              Model: '',
+              Bathroom: '',
+              Option: '',
+              Category: '',
+              Quantity: '',
+              'Unit Price': 'GRAND TOTAL',
+              'Total Price': totalCost
+            });
+          } else {
+            excelData.push({
+              Brand: '',
+              Model: '',
+              Category: '',
+              'Used In': '',
+              Quantity: '',
+              'Unit Price': 'GRAND TOTAL',
+              'Total Price': totalCost
+            });
+          }
         }
 
         const ws = window.XLSX.utils.json_to_sheet(excelData);
@@ -2804,8 +3012,32 @@ const App = () => {
 
     return (
       <div className="max-w-6xl mx-auto p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Procurement List</h2>
+          <div className="bg-white border-2 border-gray-300 rounded-lg p-1 flex gap-1">
+            <button
+              onClick={() => setProcurementViewMode('items')}
+              className={`px-4 py-2 rounded transition ${
+                procurementViewMode === 'items'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-transparent text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              By Items
+            </button>
+            <button
+              onClick={() => setProcurementViewMode('vendors')}
+              className={`px-4 py-2 rounded transition ${
+                procurementViewMode === 'vendors'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-transparent text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              By Vendors
+            </button>
+          </div>
+        </div>
+        <div className="flex justify-end items-center mb-6">
           <div className="flex gap-4 items-center">
             <label className="flex items-center gap-2">
               <input
@@ -2846,7 +3078,94 @@ const App = () => {
               No items selected. Configure bathrooms and select final options first.
             </p>
           </div>
+        ) : procurementViewMode === 'vendors' ? (
+          /* VENDOR VIEW */
+          <div className="space-y-6">
+            {vendorGroups.map(([vendor, vendorItems]) => {
+              const vendorTotal = vendorItems.reduce((sum, item) => {
+                const price = item.unit_price ?? item.price;
+                return sum + (price ? price * item.quantity : 0);
+              }, 0);
+              
+              return (
+                <div key={vendor} className={`rounded shadow p-6 ${
+                  vendor === 'Unassigned Vendor' 
+                    ? 'bg-gray-50 border-2 border-gray-300' 
+                    : 'bg-white'
+                }`}>
+                  <h3 className="text-xl font-bold mb-4 border-b pb-2">
+                    {vendor === 'Unassigned Vendor' ? '📦 ' : '🏢 '}{vendor}
+                  </h3>
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Brand</th>
+                        <th className="px-4 py-2 text-left">Model</th>
+                        <th className="px-4 py-2 text-left">Bathroom</th>
+                        <th className="px-4 py-2 text-left">Option</th>
+                        <th className="px-4 py-2 text-left">Category</th>
+                        <th className="px-4 py-2 text-center">Qty</th>
+                        {showPrices && <th className="px-4 py-2 text-right">Unit Price</th>}
+                        {showPrices && <th className="px-4 py-2 text-right">Total</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendorItems.map((item, idx) => (
+                        <tr key={`${item.item_id}-${idx}`} className="border-t">
+                          <td className="px-4 py-2 text-sm">{item.brand}</td>
+                          <td className="px-4 py-2">{item.model}</td>
+                          <td className="px-4 py-2 text-sm">{item.bathrooms.join(', ')}</td>
+                          <td className="px-4 py-2 text-sm">{item.options.join(', ')}</td>
+                          <td className="px-4 py-2 text-sm">{item.category}</td>
+                          <td className="px-4 py-2 text-center font-semibold">{item.quantity}</td>
+                          {showPrices && (
+                            <td className="px-4 py-2 text-right">
+                              {(item.unit_price ?? item.price) ? `${currency}${(item.unit_price ?? item.price).toFixed(2)}` : 'TBA'}
+                            </td>
+                          )}
+                          {showPrices && (
+                            <td className="px-4 py-2 text-right font-semibold">
+                              {(item.unit_price ?? item.price)
+                                ? `${currency}${((item.unit_price ?? item.price) * item.quantity).toFixed(2)}`
+                                : 'TBA'}
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {showPrices && vendorTotal > 0 && (
+                    <div className="mt-4 text-right">
+                      <span className="font-bold text-lg">
+                        Vendor Subtotal: {currency}{vendorTotal.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {/* Show vendor metadata if available */}
+                  {vendor !== 'Unassigned Vendor' && vendorItems[0] && (vendorItems[0].vendor_quote_ref || vendorItems[0].vendor_link) && (
+                    <div className="mt-4 pt-4 border-t text-sm text-gray-600">
+                      {vendorItems[0].vendor_quote_ref && (
+                        <div><strong>Quote Ref:</strong> {vendorItems[0].vendor_quote_ref}</div>
+                      )}
+                      {vendorItems[0].vendor_link && (
+                        <div><strong>Contact:</strong> {vendorItems[0].vendor_link}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            
+            {showPrices && (
+              <div className="bg-blue-50 rounded p-6">
+                <div className="text-2xl font-bold text-right">
+                  Grand Total: {currency}{totalCost.toFixed(2)}
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
+          /* ITEMS VIEW (BY BRAND) */
           <div className="space-y-6">
             {/* Brand Sections */}
             {brandGroups.map(([brand, brandItems]) => (
@@ -4047,6 +4366,34 @@ const App = () => {
                 />
                 <p className="text-xs text-gray-600 mt-1">
                   Example: For diverter LYR-CHR-38783NK, enter "ALD-783N" to auto-select its concealed body
+                </p>
+              </div>
+
+              {/* Vendor Information Section */}
+              <div className="col-span-2 border-t pt-4">
+                <h4 className="font-semibold mb-3 text-gray-700">📦 Vendor Information (Optional)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    value={vendorName}
+                    onChange={(e) => setVendorName(e.target.value)}
+                    placeholder="Vendor Name"
+                    className="border rounded px-3 py-2"
+                  />
+                  <input
+                    value={vendorQuoteRef}
+                    onChange={(e) => setVendorQuoteRef(e.target.value)}
+                    placeholder="Quote Reference"
+                    className="border rounded px-3 py-2"
+                  />
+                  <input
+                    value={vendorLink}
+                    onChange={(e) => setVendorLink(e.target.value)}
+                    placeholder="Vendor Link or Contact"
+                    className="border rounded px-3 py-2"
+                  />
+                </div>
+                <p className="text-xs text-gray-600 mt-2">
+                  Track vendor details for procurement. These fields are optional and won't affect pricing.
                 </p>
               </div>
 
