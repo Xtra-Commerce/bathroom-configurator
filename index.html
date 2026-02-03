@@ -1778,7 +1778,7 @@ const App = () => {
         if (opt.id === optionId) {
           const newSelections = { ...opt.selections };
           
-          if (itemId) {
+          if (itemId && item) {
             newSelections[category] = item;
             debug(`Selected ${category}: ${item.brand} ${item.model}`);
             
@@ -2822,6 +2822,66 @@ const App = () => {
   };
 
   const ProcurementList = () => {
+    // Convert category keys to user-facing labels
+    const getCategoryLabel = (categoryKey) => {
+      const categoryLabels = {
+        'basin': 'Basin',
+        'mixer': 'Basin Mixer',
+        'concealed_body': 'Concealed Body',
+        'wc': 'WC',
+        'health_faucet': 'Health Faucet',
+        'hand_shower': 'Hand Shower',
+        'hand_shower_hose': 'Hand Shower Hose',
+        'hand_shower_outlet': 'Hand Shower Wall Outlet',
+        'hand_shower_rail': 'Hand Shower Rail',
+        'overhead_shower': 'Overhead Shower',
+        'shower_arm': 'Shower Arm',
+        'diverter': 'Diverter',
+        'diverter_concealed_body': 'Diverter Concealed Body',
+        'shower_panel': 'Shower Panel',
+        'geyser': 'Geyser',
+        'shower_drain': 'Shower Drain',
+        'floor_drain_wc': 'Floor Drain near WC',
+        'toilet_paper_holder': 'Toilet Paper Holder',
+        'hand_towel_rail': 'Hand Towel Rail',
+        'towel_rack': 'Towel Rack',
+        'robe_hook': 'Robe Hook',
+        'drain': 'Drain',
+        'wall_tiles': 'Wall Tiles',
+        'feature_wall_tiles': 'Feature Wall Tiles',
+        'floor_tiles': 'Floor Tiles',
+        'accessory': 'Accessory'
+      };
+      
+      // Check if we have a predefined label
+      if (categoryLabels[categoryKey]) {
+        return categoryLabels[categoryKey];
+      }
+      
+      // Check custom categories
+      const customCat = customCategories.find(cat => {
+        const catName = typeof cat === 'string' ? cat : cat.name;
+        const catKey = catName.toLowerCase().replace(/\s+/g, '_');
+        return catKey === categoryKey;
+      });
+      
+      if (customCat) {
+        return typeof customCat === 'string' ? customCat : customCat.name;
+      }
+      
+      // Fallback: format the key (replace underscores with spaces and capitalize)
+      return categoryKey.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+    };
+    
+    // Column visibility state
+    const [visibleColumns, setVisibleColumns] = React.useState({
+      bathroom: true,
+      option: true,
+      category: true
+    });
+    
     const procurementList = [];
 
     bathrooms.forEach(bathroom => {
@@ -2831,7 +2891,9 @@ const App = () => {
         if (selectedOption) {
           Object.entries(selectedOption.selections).forEach(([category, item]) => {
             if (item) {
-              const existing = procurementList.find(p => p.item_id === item.item_id);
+              // Look up current item data from items array to get latest vendor info
+              const currentItem = items.find(i => i.item_id === item.item_id) || item;
+              const existing = procurementList.find(p => p.item_id === currentItem.item_id);
               if (existing) {
                 existing.quantity += 1;
                 existing.bathrooms.push(bathroom.name);
@@ -2839,7 +2901,7 @@ const App = () => {
                 existing.categories.push(category);
               } else {
                 procurementList.push({
-                  ...item,
+                  ...currentItem,
                   quantity: 1,
                   bathrooms: [bathroom.name],
                   options: [selectedOption.name],
@@ -2906,33 +2968,37 @@ const App = () => {
         if (procurementViewMode === 'vendors') {
           // Export by vendors
           vendorGroups.forEach(([vendor, vendorItems]) => {
-            excelData.push({
+            const headerRow = {
               Vendor: `===== ${vendor} =====`,
               Brand: '',
-              Model: '',
-              Bathroom: '',
-              Option: '',
-              Category: '',
-              Quantity: '',
-              'Unit Price': '',
-              'Total Price': ''
-            });
+              Model: ''
+            };
+            if (visibleColumns.bathroom) headerRow.Bathroom = '';
+            if (visibleColumns.option) headerRow.Option = '';
+            if (visibleColumns.category) headerRow.Category = '';
+            headerRow.Quantity = '';
+            if (showPrices) {
+              headerRow['Unit Price'] = '';
+              headerRow['Total Price'] = '';
+            }
+            excelData.push(headerRow);
             
             vendorItems.forEach(item => {
               const price = item.unit_price ?? item.price;
-              excelData.push({
+              const row = {
                 Vendor: '',
                 Brand: item.brand,
-                Model: item.model,
-                Bathroom: item.bathrooms.join(', '),
-                Option: item.options.join(', '),
-                Category: item.category,
-                Quantity: item.quantity,
-                'Unit Price': showPrices ? (price || 'TBA') : '-',
-                'Total Price': showPrices
-                  ? (price ? price * item.quantity : 'TBA')
-                  : '-'
-              });
+                Model: item.model
+              };
+              if (visibleColumns.bathroom) row.Bathroom = item.bathrooms.join(', ');
+              if (visibleColumns.option) row.Option = item.options.join(', ');
+              if (visibleColumns.category) row.Category = getCategoryLabel(item.category);
+              row.Quantity = item.quantity;
+              if (showPrices) {
+                row['Unit Price'] = price || 'TBA';
+                row['Total Price'] = price ? price * item.quantity : 'TBA';
+              }
+              excelData.push(row);
             });
             
             if (showPrices) {
@@ -2941,17 +3007,18 @@ const App = () => {
                 return sum + (price ? price * item.quantity : 0);
               }, 0);
               
-              excelData.push({
+              const subtotalRow = {
                 Vendor: '',
                 Brand: '',
-                Model: '',
-                Bathroom: '',
-                Option: '',
-                Category: '',
-                Quantity: '',
-                'Unit Price': `${vendor} Subtotal`,
-                'Total Price': vendorTotal
-              });
+                Model: ''
+              };
+              if (visibleColumns.bathroom) subtotalRow.Bathroom = '';
+              if (visibleColumns.option) subtotalRow.Option = '';
+              if (visibleColumns.category) subtotalRow.Category = '';
+              subtotalRow.Quantity = '';
+              subtotalRow['Unit Price'] = `${vendor} Subtotal`;
+              subtotalRow['Total Price'] = vendorTotal;
+              excelData.push(subtotalRow);
             }
             
             excelData.push({});
@@ -2964,7 +3031,7 @@ const App = () => {
               excelData.push({
                 Brand: brand,
                 Model: item.model,
-                Category: item.category,
+                Category: getCategoryLabel(item.category),
                 'Used In': item.bathrooms.join(', '),
                 Quantity: item.quantity,
                 'Unit Price': showPrices ? (price || 'TBA') : '-',
@@ -2979,17 +3046,18 @@ const App = () => {
         if (showPrices) {
           excelData.push({});
           if (procurementViewMode === 'vendors') {
-            excelData.push({
+            const grandTotalRow = {
               Vendor: '',
               Brand: '',
-              Model: '',
-              Bathroom: '',
-              Option: '',
-              Category: '',
-              Quantity: '',
-              'Unit Price': 'GRAND TOTAL',
-              'Total Price': totalCost
-            });
+              Model: ''
+            };
+            if (visibleColumns.bathroom) grandTotalRow.Bathroom = '';
+            if (visibleColumns.option) grandTotalRow.Option = '';
+            if (visibleColumns.category) grandTotalRow.Category = '';
+            grandTotalRow.Quantity = '';
+            grandTotalRow['Unit Price'] = 'GRAND TOTAL';
+            grandTotalRow['Total Price'] = totalCost;
+            excelData.push(grandTotalRow);
           } else {
             excelData.push({
               Brand: '',
@@ -3054,6 +3122,35 @@ const App = () => {
               />
               Show Prices
             </label>
+            {procurementViewMode === 'vendors' && (
+              <>
+                <span className="text-gray-400">|</span>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={visibleColumns.bathroom}
+                    onChange={(e) => setVisibleColumns({...visibleColumns, bathroom: e.target.checked})}
+                  />
+                  Bathroom
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={visibleColumns.option}
+                    onChange={(e) => setVisibleColumns({...visibleColumns, option: e.target.checked})}
+                  />
+                  Option
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={visibleColumns.category}
+                    onChange={(e) => setVisibleColumns({...visibleColumns, category: e.target.checked})}
+                  />
+                  Category
+                </label>
+              </>
+            )}
             <button
               onClick={() => {
                 setExportType('pdf');
@@ -3105,9 +3202,9 @@ const App = () => {
                       <tr>
                         <th className="px-4 py-2 text-left">Brand</th>
                         <th className="px-4 py-2 text-left">Model</th>
-                        <th className="px-4 py-2 text-left">Bathroom</th>
-                        <th className="px-4 py-2 text-left">Option</th>
-                        <th className="px-4 py-2 text-left">Category</th>
+                        {visibleColumns.bathroom && <th className="px-4 py-2 text-left">Bathroom</th>}
+                        {visibleColumns.option && <th className="px-4 py-2 text-left">Option</th>}
+                        {visibleColumns.category && <th className="px-4 py-2 text-left">Category</th>}
                         <th className="px-4 py-2 text-center">Qty</th>
                         {showPrices && <th className="px-4 py-2 text-right">Unit Price</th>}
                         {showPrices && <th className="px-4 py-2 text-right">Total</th>}
@@ -3118,9 +3215,9 @@ const App = () => {
                         <tr key={`${item.item_id}-${idx}`} className="border-t">
                           <td className="px-4 py-2 text-sm">{item.brand}</td>
                           <td className="px-4 py-2">{item.model}</td>
-                          <td className="px-4 py-2 text-sm">{item.bathrooms.join(', ')}</td>
-                          <td className="px-4 py-2 text-sm">{item.options.join(', ')}</td>
-                          <td className="px-4 py-2 text-sm">{item.category}</td>
+                          {visibleColumns.bathroom && <td className="px-4 py-2 text-sm">{item.bathrooms.join(', ')}</td>}
+                          {visibleColumns.option && <td className="px-4 py-2 text-sm">{item.options.join(', ')}</td>}
+                          {visibleColumns.category && <td className="px-4 py-2 text-sm">{getCategoryLabel(item.category)}</td>}
                           <td className="px-4 py-2 text-center font-semibold">{item.quantity}</td>
                           {showPrices && (
                             <td className="px-4 py-2 text-right">
@@ -3190,7 +3287,7 @@ const App = () => {
                     {brandItems.map(item => (
                       <tr key={item.item_id} className="border-t">
                         <td className="px-4 py-2">{item.model}</td>
-                        <td className="px-4 py-2 text-sm">{item.category}</td>
+                        <td className="px-4 py-2 text-sm">{getCategoryLabel(item.category)}</td>
                         <td className="px-4 py-2 text-sm">{item.bathrooms.join(', ')}</td>
                         <td className="px-4 py-2 text-center font-semibold">{item.quantity}</td>
                         {showPrices && (
@@ -3241,7 +3338,7 @@ const App = () => {
                             item.category === 'feature_wall_tiles' ? 'bg-purple-100 text-purple-800' :
                             'bg-green-100 text-green-800'
                           }`}>
-                            {item.category.replace(/_/g, ' ')}
+                            {getCategoryLabel(item.category)}
                           </span>
                         </td>
                         <td className="px-4 py-2 text-sm">{item.bathrooms.join(', ')}</td>
@@ -3826,19 +3923,6 @@ const App = () => {
                 }`}
               >
                 Settings
-              </button>
-              <button
-                onClick={() => {
-                  setView('help');
-                  if (typeof window !== 'undefined' && window.sc_log_pv) {
-                    try { window.sc_log_pv(); } catch(e) {}
-                  }
-                }}
-                className={`px-4 py-2 rounded ${
-                  view === 'help' ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'
-                }`}
-              >
-                Help
               </button>
           </div>
         </div>
