@@ -479,6 +479,36 @@ const App = () => {
     return typeof localStorage !== 'undefined';
   };
 
+  // Normalize legacy items to match current schema
+  const normalizeItem = (item) => {
+    // Legacy items have different field names that need to be normalized
+    const normalized = {
+      ...item,
+      // Normalize ID: id → item_id
+      item_id: item.item_id || item.id || `item_${Date.now()}_${Math.random()}`,
+      // Normalize price: price → unit_price
+      unit_price: item.unit_price ?? item.price ?? null,
+      // Normalize related items: relatedItems → related_items
+      related_items: item.related_items || item.relatedItems || [],
+      // Normalize image fields
+      // If image_url contains base64 data, move it to image_data
+      image_data: item.image_data || (item.image_url && item.image_url.startsWith('data:') ? item.image_url : null),
+      image_url: item.image_url && !item.image_url.startsWith('data:') ? item.image_url : (item.imageUrl || ''),
+      // Ensure vendor fields exist
+      vendor_name: item.vendor_name || '',
+      vendor_quote_ref: item.vendor_quote_ref || '',
+      vendor_link: item.vendor_link || ''
+    };
+    
+    // Remove legacy field names to avoid confusion
+    delete normalized.id;
+    delete normalized.price;
+    delete normalized.relatedItems;
+    delete normalized.imageUrl;
+    
+    return normalized;
+  };
+
   const loadFromStorage = async () => {
     if (!checkStorage()) {
       debug('⚠️ Storage API not available - data will not persist');
@@ -543,8 +573,10 @@ const App = () => {
       
       if (itemsData) {
         const loadedItems = JSON.parse(itemsData.value);
-        setItems(loadedItems);
-        debug(`✓ Loaded ${loadedItems.length} items`);
+        // Normalize all items to ensure consistent schema
+        const normalizedItems = loadedItems.map(normalizeItem);
+        setItems(normalizedItems);
+        debug(`✓ Loaded and normalized ${normalizedItems.length} items`);
       }
       
       if (bathroomsData) {
@@ -1147,17 +1179,8 @@ const App = () => {
   const restoreBackup = async (backupData) => {
     try {
       if (backupData.version === '2.0') {
-        // Normalize property names for backward compatibility
-        const newItems = (backupData.items || []).map(item => ({
-          ...item,
-          // Convert imageUrl to image_url if present
-          image_url: item.image_url || item.imageUrl || '',
-          // Normalize price field: price → unit_price
-          unit_price: item.unit_price ?? item.price ?? null,
-          // Remove old properties
-          imageUrl: undefined,
-          price: undefined
-        }));
+        // Normalize all items to ensure consistent schema (handles legacy field names)
+        const newItems = (backupData.items || []).map(normalizeItem);
         
         // Normalize bathrooms to ensure renders array exists
         const newBathrooms = (backupData.bathrooms || []).map(bathroom => ({
@@ -1177,7 +1200,7 @@ const App = () => {
           selections: newSelections
         });
         
-        debug(`✓ Restored: ${newItems.length} items, ${newBathrooms.length} bathrooms`);
+        debug(`✓ Restored and normalized: ${newItems.length} items, ${newBathrooms.length} bathrooms`);
         alert('Backup restored successfully!');
       } else {
         alert('Unsupported backup version');
@@ -1205,17 +1228,11 @@ const App = () => {
           if (data.version === '2.0' && data.items) {
             await restoreBackup(data);
           } else if (Array.isArray(data)) {
-            // Regular items array - normalize property names
-            const normalizedItems = data.map(item => ({
-              ...item,
-              // Convert imageUrl to image_url if present
-              image_url: item.image_url || item.imageUrl || '',
-              // Remove old imageUrl property if it exists
-              imageUrl: undefined
-            }));
+            // Regular items array - normalize to ensure consistent schema
+            const normalizedItems = data.map(normalizeItem);
             setItems(normalizedItems);
             await saveToStorage({ items: normalizedItems });
-            debug(`✓ Imported ${normalizedItems.length} items from JSON`);
+            debug(`✓ Imported and normalized ${normalizedItems.length} items from JSON`);
             alert(`Imported ${normalizedItems.length} items!`);
           } else {
             throw new Error('Invalid JSON format');
