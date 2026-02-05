@@ -190,6 +190,7 @@ const App = () => {
   const [comparisonBaseline, setComparisonBaseline] = React.useState(null); // Baseline option for comparison
   const [procurementViewMode, setProcurementViewMode] = React.useState('items'); // 'items' or 'vendors'
   const [visibleColumns, setVisibleColumns] = React.useState({ bathroom: true, option: true, category: true }); // Procurement column visibility
+  const [sortConfig, setSortConfig] = React.useState({ column: null, direction: 'asc' }); // Database table sorting
 
   const defaultCats = ['basin', 'wc', 'hand_shower', 'hand_shower_hose', 'hand_shower_outlet', 'hand_shower_rail', 'overhead_shower', 'mixer', 'concealed_body', 'diverter', 'diverter_concealed_body', 'shower_panel', 'geyser', 'shower_drain', 'floor_drain_wc', 'toilet_paper_holder', 'hand_towel_rail', 'towel_rack', 'robe_hook', 'accessory', 'drain', 'health_faucet', 'wall_tiles', 'feature_wall_tiles', 'floor_tiles'];
   
@@ -692,6 +693,25 @@ const App = () => {
         setCurrency('$');
         setCurrencyCode('USD');
         debug('✓ Defaulted currency to USD');
+      }
+
+      // Load database sort preference
+      let sortData;
+      try {
+        if (useArtifactStorage) {
+          sortData = await window.storage.get('database-sort');
+        } else {
+          const data = localStorage.getItem('database-sort');
+          if (data) sortData = { value: data };
+        }
+      } catch (err) {
+        debug(`Sort config storage error: ${err.message}`);
+      }
+
+      if (sortData) {
+        const sortSettings = JSON.parse(sortData.value);
+        setSortConfig(sortSettings);
+        debug(`✓ Loaded sort preference: ${sortSettings.column} (${sortSettings.direction})`);
       }
 
       // Check if user has seen welcome page
@@ -1424,7 +1444,47 @@ const App = () => {
     e.target.value = '';
   };
 
-  const filtered = filterCat === 'all' ? items : items.filter(i => i.category === filterCat);
+  const handleSort = async (column) => {
+    const newDirection = sortConfig.column === column && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    const newConfig = { column, direction: newDirection };
+    setSortConfig(newConfig);
+    
+    // Save sort preference
+    try {
+      if (window.storage && typeof window.storage.set === 'function') {
+        await window.storage.set('database-sort', JSON.stringify(newConfig));
+      } else {
+        localStorage.setItem('database-sort', JSON.stringify(newConfig));
+      }
+      debug(`✓ Sort preference saved: ${column} (${newDirection})`);
+    } catch (err) {
+      debug(`⚠️ Failed to save sort preference: ${err.message}`);
+    }
+  };
+
+  // Filter and sort items
+  let filtered = filterCat === 'all' ? items : items.filter(i => i.category === filterCat);
+  
+  // Apply sorting if configured
+  if (sortConfig.column) {
+    filtered = [...filtered].sort((a, b) => {
+      let aVal, bVal;
+      
+      if (sortConfig.column === 'category') {
+        // Sort by user-facing category labels
+        aVal = getCategoryLabel(a.category).toLowerCase();
+        bVal = getCategoryLabel(b.category).toLowerCase();
+      } else if (sortConfig.column === 'brand') {
+        // Sort by brand (case-insensitive, trimmed)
+        aVal = (a.brand || '').trim().toLowerCase();
+        bVal = (b.brand || '').trim().toLowerCase();
+      }
+      
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
 
   const ConfigureBathrooms = () => {
     const getDefaultAccessories = () => [
@@ -2735,7 +2795,7 @@ const App = () => {
     };
 
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto p-6">
         <div className="mb-8 flex justify-between items-start">
           <div>
             <h2 className="text-4xl font-bold text-gray-900 mb-2">Project Overview</h2>
@@ -2763,7 +2823,7 @@ const App = () => {
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {bathrooms.map(bathroom => {
               const selectedOption = getSelectedOption(bathroom);
               const total = selectedOption ? calculateOptionTotal(selectedOption) : 0;
@@ -2773,10 +2833,10 @@ const App = () => {
                 <div key={bathroom.id} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
                   {/* Header */}
                   <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-3xl font-bold">{bathroom.name}</h3>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h3 className="text-2xl font-bold">{bathroom.name}</h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             bathroom.importance === 'high' ? 'bg-red-500' :
                             bathroom.importance === 'medium' ? 'bg-yellow-500' :
@@ -2786,16 +2846,16 @@ const App = () => {
                           </span>
                         </div>
                         {selectedOption && (
-                          <p className="text-blue-100 mt-2 text-lg">
+                          <p className="text-blue-100 mt-2">
                             Selected: <span className="font-semibold">{selectedOption.name}</span>
                           </p>
                         )}
                       </div>
-                      <div className="text-right">
-                        <div className="text-5xl font-bold">
+                      <div className="text-right ml-4">
+                        <div className="text-4xl font-bold">
                           {currency}{(total / 1000).toFixed(1)}K
                         </div>
-                        <p className="text-blue-100 text-sm mt-1">
+                        <p className="text-blue-100 text-xs mt-1">
                           {currency}{total.toLocaleString('en-IN')}
                         </p>
                       </div>
@@ -2804,54 +2864,45 @@ const App = () => {
 
                   {selectedOption ? (
                     <div className="p-6">
-                      {/* Quick Summary Bar */}
-                      <div className="grid grid-cols-5 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-                        {Object.entries(categorized).map(([groupName, items]) => {
-                          if (items.length === 0) return null;
-                          return (
-                            <div key={groupName} className="text-center">
-                              <div className="text-2xl font-bold text-blue-600">{items.length}</div>
-                              <div className="text-xs text-gray-600 uppercase mt-1">{groupName}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Categorized Items */}
+                      {/* Categorized Items in vertical cards */}
                       <div className="space-y-6">
                         {Object.entries(categorized).map(([groupName, items]) => {
                           if (items.length === 0) return null;
                           
                           return (
                             <div key={groupName}>
-                              <h4 className="text-sm font-bold text-gray-500 uppercase mb-3 pb-2 border-b-2 border-blue-600">
-                                {groupName}
+                              <h4 className="text-sm font-bold text-gray-500 uppercase mb-3 pb-2 border-b-2 border-blue-600 flex items-center justify-between">
+                                <span>{groupName}</span>
+                                <span className="text-blue-600">{items.length} item{items.length > 1 ? 's' : ''}</span>
                               </h4>
-                              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              <div className="space-y-3">
                                 {items.map(({ category, item }) => (
-                                  <div key={category} className="border rounded-lg p-3 hover:shadow-md transition-shadow bg-white">
-                                    <div className="flex gap-3">
-                                      {(item.image_data || item.image_url) && (
-                                        <img
-                                          src={item.image_data || item.image_url}
-                                          alt={item.model}
-                                          className="w-16 h-16 object-cover rounded flex-shrink-0"
-                                          onError={(e) => e.target.style.display = 'none'}
-                                        />
+                                  <div key={category} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white flex gap-4">
+                                    {(item.image_data || item.image_url) && (
+                                      <img
+                                        src={item.image_data || item.image_url}
+                                        alt={item.model}
+                                        className="w-20 h-20 object-cover rounded flex-shrink-0"
+                                        onError={(e) => e.target.style.display = 'none'}
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs text-gray-500 uppercase mb-1">
+                                        {getCategoryLabel(category)}
+                                      </p>
+                                      <p className="font-bold text-gray-900">{item.brand}</p>
+                                      <p className="text-sm text-gray-600 mt-1">{item.model}</p>
+                                      {item.series && (
+                                        <p className="text-xs text-gray-500 mt-1">Series: {item.series}</p>
                                       )}
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-500 uppercase">
-                                          {category.replace(/_/g, ' ')}
-                                        </p>
-                                        <p className="font-bold text-sm text-gray-900 truncate">{item.brand}</p>
-                                        <p className="text-xs text-gray-600 truncate">{item.model}</p>
-                                        {(item.unit_price ?? item.price) && (
-                                          <p className="text-sm font-semibold text-blue-600 mt-1">
-                                            {currency}{(item.unit_price ?? item.price).toLocaleString('en-IN')}
-                                          </p>
-                                        )}
-                                      </div>
                                     </div>
+                                    {(item.unit_price ?? item.price) && (
+                                      <div className="text-right flex-shrink-0">
+                                        <p className="text-lg font-semibold text-blue-600">
+                                          {currency}{(item.unit_price ?? item.price).toLocaleString('en-IN')}
+                                        </p>
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
@@ -2864,7 +2915,7 @@ const App = () => {
                       {selectedOption.accessories && selectedOption.accessories.filter(a => a.checked).length > 0 && (
                         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                           <h5 className="font-bold text-sm text-blue-900 mb-3">✓ Included Accessories</h5>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                          <div className="grid grid-cols-2 gap-2">
                             {selectedOption.accessories.filter(a => a.checked).map((acc, idx) => (
                               <div key={idx} className="text-sm text-blue-800 flex items-center">
                                 <span className="text-blue-600 mr-2">✓</span>
@@ -4747,8 +4798,34 @@ const App = () => {
                         </th>
                       )}
                       <th className="px-4 py-2 text-left">Image</th>
-                      <th className="px-4 py-2 text-left">Category</th>
-                      <th className="px-4 py-2 text-left">Brand</th>
+                      <th 
+                        className="px-4 py-2 text-left cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('category')}
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Category
+                          {sortConfig.column === 'category' && (
+                            <span className="text-xs">
+                              {sortConfig.direction === 'asc' ? '▲' : '▼'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-4 py-2 text-left cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('brand')}
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Brand
+                          {sortConfig.column === 'brand' && (
+                            <span className="text-xs">
+                              {sortConfig.direction === 'asc' ? '▲' : '▼'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
                       <th className="px-4 py-2 text-left">Model</th>
                       <th className="px-4 py-2 text-left">Price</th>
                       {!bulkEditMode && <th className="px-4 py-2 text-left">Actions</th>}
