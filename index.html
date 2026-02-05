@@ -189,6 +189,7 @@ const App = () => {
   const [showIntroduction, setShowIntroduction] = React.useState(false); // Show welcome introduction
   const [comparisonBaseline, setComparisonBaseline] = React.useState(null); // Baseline option for comparison
   const [procurementViewMode, setProcurementViewMode] = React.useState('items'); // 'items' or 'vendors'
+  const [visibleColumns, setVisibleColumns] = React.useState({ bathroom: true, option: true, category: true }); // Procurement column visibility
 
   const defaultCats = ['basin', 'wc', 'hand_shower', 'hand_shower_hose', 'hand_shower_outlet', 'hand_shower_rail', 'overhead_shower', 'mixer', 'concealed_body', 'diverter', 'diverter_concealed_body', 'shower_panel', 'geyser', 'shower_drain', 'floor_drain_wc', 'toilet_paper_holder', 'hand_towel_rail', 'towel_rack', 'robe_hook', 'accessory', 'drain', 'health_faucet', 'wall_tiles', 'feature_wall_tiles', 'floor_tiles'];
   
@@ -802,7 +803,8 @@ const App = () => {
     
     // Check file size (limit to 2MB for base64)
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image too large! Please use images under 2MB or use an image URL instead.');
+      setNotification({ type: 'error', message: 'Image too large! Please use images under 2MB or use an image URL instead.' });
+      setTimeout(() => setNotification(null), 4000);
       debug(`⚠️ Image rejected: ${file.name} (${Math.round(file.size/1024)}KB)`);
       return;
     }
@@ -818,7 +820,8 @@ const App = () => {
     };
     reader.onerror = () => {
       debug('⚠️ Image upload failed');
-      alert('Failed to read image file');
+      setNotification({ type: 'error', message: 'Failed to read image file' });
+      setTimeout(() => setNotification(null), 3000);
     };
     reader.readAsDataURL(file);
   };
@@ -922,7 +925,8 @@ const App = () => {
     const item = items.find(i => i.item_id === id);
     if (!item) {
       debug('ERROR: Item not found');
-      alert('Item not found');
+      setNotification({ type: 'error', message: 'Item not found' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
     debug(`Delete requested: ${item.brand} ${item.model}`);
@@ -936,7 +940,8 @@ const App = () => {
     await saveToStorage({ items: filtered });
     debug(`✓ Deleted. Remaining: ${filtered.length}`);
     setDeleteConfirm(null);
-    alert('Item deleted!');
+    setNotification({ type: 'success', message: 'Item deleted!' });
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const cancelDelete = () => {
@@ -1046,7 +1051,8 @@ const App = () => {
 
   const bulkUpdateCategory = async (newCategory) => {
     if (selectedItems.length === 0) {
-      alert('No items selected');
+      setNotification({ type: 'warning', message: 'No items selected' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -1061,7 +1067,8 @@ const App = () => {
     setItems(newItems);
     await saveToStorage({ items: newItems });
     debug(`✓ Updated category to "${newCategory}" for ${count} items`);
-    alert(`Updated ${count} items to category: ${newCategory}`);
+    setNotification({ type: 'success', message: `Updated ${count} items to category: ${newCategory}` });
+    setTimeout(() => setNotification(null), 3000);
     
     // Reset selections
     setSelectedItems([]);
@@ -1070,12 +1077,14 @@ const App = () => {
 
   const bulkUpdateBrand = async (newBrand) => {
     if (selectedItems.length === 0) {
-      alert('No items selected');
+      setNotification({ type: 'warning', message: 'No items selected' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
     if (!newBrand.trim()) {
-      alert('Please enter a brand name');
+      setNotification({ type: 'warning', message: 'Please enter a brand name' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -1090,7 +1099,8 @@ const App = () => {
     setItems(newItems);
     await saveToStorage({ items: newItems });
     debug(`✓ Updated brand to "${newBrand}" for ${count} items`);
-    alert(`Updated ${count} items to brand: ${newBrand}`);
+    setNotification({ type: 'success', message: `Updated ${count} items to brand: ${newBrand}` });
+    setTimeout(() => setNotification(null), 3000);
     
     setSelectedItems([]);
     setShowBulkEditPanel(false);
@@ -1098,13 +1108,15 @@ const App = () => {
 
   const bulkUpdatePrice = async (adjustment, mode) => {
     if (selectedItems.length === 0) {
-      alert('No items selected');
+      setNotification({ type: 'warning', message: 'No items selected' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
     const adjustmentValue = parseFloat(adjustment);
     if (isNaN(adjustmentValue)) {
-      alert('Please enter a valid number');
+      setNotification({ type: 'warning', message: 'Please enter a valid number' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -1129,7 +1141,8 @@ const App = () => {
     setItems(newItems);
     await saveToStorage({ items: newItems });
     debug(`✓ Updated prices for ${count} items (${mode}: ${adjustmentValue})`);
-    alert(`Updated prices for ${count} items`);
+    setNotification({ type: 'success', message: `Updated prices for ${count} items` });
+    setTimeout(() => setNotification(null), 3000);
     
     setSelectedItems([]);
     setShowBulkEditPanel(false);
@@ -1137,7 +1150,8 @@ const App = () => {
 
   const bulkUpdateVendor = async (field, value) => {
     if (selectedItems.length === 0) {
-      alert('No items selected');
+      setNotification({ type: 'warning', message: 'No items selected' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -1159,7 +1173,8 @@ const App = () => {
     };
     
     debug(`✓ Updated ${fieldNames[field]} for ${count} items`);
-    alert(`Updated ${fieldNames[field]} for ${count} items`);
+    setNotification({ type: 'success', message: `Updated ${fieldNames[field]} for ${count} items` });
+    setTimeout(() => setNotification(null), 3000);
     
     setSelectedItems([]);
     setShowBulkEditPanel(false);
@@ -1167,7 +1182,8 @@ const App = () => {
 
   const bulkDelete = async () => {
     if (selectedItems.length === 0) {
-      alert('No items selected');
+      setNotification({ type: 'warning', message: 'No items selected' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -1182,7 +1198,8 @@ const App = () => {
     setItems(newItems);
     await saveToStorage({ items: newItems });
     debug(`✓ Deleted ${count} items. Remaining: ${newItems.length}`);
-    alert(`Deleted ${count} items successfully!`);
+    setNotification({ type: 'success', message: `Deleted ${count} items successfully!` });
+    setTimeout(() => setNotification(null), 3000);
     
     setSelectedItems([]);
     setBulkEditMode(false);
@@ -1210,10 +1227,12 @@ const App = () => {
       setTimeout(() => URL.revokeObjectURL(url), 100);
       
       debug(`✓ Exported ${items.length} items to JSON`);
-      setTimeout(() => alert(`Exported ${items.length} items. Check your Downloads folder.`), 300);
+      setNotification({ type: 'success', message: `Exported ${items.length} items. Check your Downloads folder.` });
+      setTimeout(() => setNotification(null), 4000);
     } catch (error) {
       debug(`⚠️ Export error: ${error.message}`);
-      alert(`Export failed: ${error.message}\n\nSee debug log for details.`);
+      setNotification({ type: 'error', message: `Export failed: ${error.message}. See debug log for details.` });
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -1251,12 +1270,14 @@ const App = () => {
       setTimeout(() => URL.revokeObjectURL(url), 100);
       
       debug(`✓ Backup created successfully`);
-      setTimeout(() => alert('Backup downloaded! Check your Downloads folder.'), 300);
+      setNotification({ type: 'success', message: 'Backup downloaded! Check your Downloads folder.' });
+      setTimeout(() => setNotification(null), 4000);
       
     } catch (error) {
       debug(`⚠️ Backup error: ${error.message}`);
       debug(`Error stack: ${error.stack}`);
-      alert(`Backup failed: ${error.message}\n\nTry exporting items separately from the Database tab.`);
+      setNotification({ type: 'error', message: `Backup failed: ${error.message}. Try exporting items separately from the Database tab.` });
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -1285,13 +1306,16 @@ const App = () => {
         });
         
         debug(`✓ Restored and normalized: ${newItems.length} items, ${newBathrooms.length} bathrooms`);
-        alert('Backup restored successfully!');
+        setNotification({ type: 'success', message: 'Backup restored successfully!' });
+        setTimeout(() => setNotification(null), 3000);
       } else {
-        alert('Unsupported backup version');
+        setNotification({ type: 'error', message: 'Unsupported backup version' });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
       debug(`Restore error: ${error.message}`);
-      alert('Error restoring backup');
+      setNotification({ type: 'error', message: 'Error restoring backup' });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -1317,13 +1341,15 @@ const App = () => {
             setItems(normalizedItems);
             await saveToStorage({ items: normalizedItems });
             debug(`✓ Imported and normalized ${normalizedItems.length} items from JSON`);
-            alert(`Imported ${normalizedItems.length} items!`);
+            setNotification({ type: 'success', message: `Imported ${normalizedItems.length} items!` });
+            setTimeout(() => setNotification(null), 3000);
           } else {
             throw new Error('Invalid JSON format');
           }
         } catch (err) {
           debug(`JSON import error: ${err.message}`);
-          alert('Invalid JSON file');
+          setNotification({ type: 'error', message: 'Invalid JSON file' });
+          setTimeout(() => setNotification(null), 3000);
         }
       };
       reader.readAsText(file);
@@ -1385,11 +1411,13 @@ const App = () => {
         setItems(imported);
         await saveToStorage({ items: imported });
         debug(`✓ Imported ${imported.length} items from Excel`);
-        alert(`Imported ${imported.length} items!`);
+        setNotification({ type: 'success', message: `Imported ${imported.length} items!` });
+        setTimeout(() => setNotification(null), 3000);
         
       } catch (err) {
         debug(`Excel import error: ${err.message}`);
-        alert('Excel import failed. See debug log.');
+        setNotification({ type: 'error', message: 'Excel import failed. See debug log.' });
+        setTimeout(() => setNotification(null), 3000);
       }
     }
     
@@ -1415,7 +1443,8 @@ const App = () => {
 
     const addBathroom = async () => {
       if (!bathroomName) {
-        alert('Enter bathroom name');
+        setNotification({ type: 'warning', message: 'Enter bathroom name' });
+        setTimeout(() => setNotification(null), 3000);
         return;
       }
       
@@ -1442,7 +1471,8 @@ const App = () => {
       await saveToStorage({ bathrooms: newBathrooms });
       
       debug(`✓ Bathroom added: ${bathroomName} with ${numOptions} options`);
-      alert('Bathroom added!');
+      setNotification({ type: 'success', message: 'Bathroom added!' });
+      setTimeout(() => setNotification(null), 3000);
       setBathroomName('');
     };
 
@@ -1555,10 +1585,12 @@ const App = () => {
                   setBathrooms(updatedBathrooms);
                   await saveToStorage({ bathrooms: updatedBathrooms });
                   debug(`Added ${newRenders.length} render(s) to ${bathroom.name}`);
-                  alert(`${newRenders.length} render image(s) uploaded!`);
+                  setNotification({ type: 'success', message: `${newRenders.length} render image(s) uploaded!` });
+                  setTimeout(() => setNotification(null), 3000);
                 } catch (error) {
                   debug(`Render upload error: ${error.message}`);
-                  alert('Error uploading renders');
+                  setNotification({ type: 'error', message: 'Error uploading renders' });
+                  setTimeout(() => setNotification(null), 3000);
                 }
               };
 
@@ -1599,7 +1631,8 @@ const App = () => {
                         <button
                           onClick={async () => {
                             if (!editName.trim()) {
-                              alert('Bathroom name cannot be empty');
+                              setNotification({ type: 'warning', message: 'Bathroom name cannot be empty' });
+                              setTimeout(() => setNotification(null), 3000);
                               return;
                             }
                             const updatedBathrooms = bathrooms.map(b =>
@@ -2337,7 +2370,8 @@ const App = () => {
                     const newSelections = { ...finalSelections, [selectedBathroom.id]: option.id };
                     setFinalSelections(newSelections);
                     await saveToStorage({ selections: newSelections });
-                    alert(`${option.name} selected for ${selectedBathroom.name}!`);
+                    setNotification({ type: 'success', message: `${option.name} selected for ${selectedBathroom.name}!` });
+                    setTimeout(() => setNotification(null), 3000);
                   }}
                   className={`w-full py-2 rounded font-semibold ${
                     finalSelections[selectedBathroom.id] === option.id
@@ -2526,7 +2560,8 @@ const App = () => {
                       const newSelections = { ...finalSelections, [selectedBathroom.id]: option.id };
                       setFinalSelections(newSelections);
                       await saveToStorage({ selections: newSelections });
-                      alert(`${option.name} selected for ${selectedBathroom.name}!`);
+                      setNotification({ type: 'success', message: `${option.name} selected for ${selectedBathroom.name}!` });
+                      setTimeout(() => setNotification(null), 3000);
                     }}
                     className={`w-full py-3 rounded-lg font-bold text-lg ${
                       isSelected
@@ -2923,13 +2958,6 @@ const App = () => {
   };
 
   const ProcurementList = () => {
-    // Column visibility state
-    const [visibleColumns, setVisibleColumns] = React.useState({
-      bathroom: true,
-      option: true,
-      category: true
-    });
-    
     const procurementList = [];
 
     bathrooms.forEach(bathroom => {
@@ -2971,11 +2999,36 @@ const App = () => {
       return acc;
     }, {});
 
-    // Group by vendor (new behavior)
-    const groupedByVendor = procurementList.reduce((acc, item) => {
-      const key = item.vendor_name || 'Unassigned Vendor';
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(item);
+    // Group by vendor (normalized for consolidation)
+    const vendorMap = procurementList.reduce((acc, item) => {
+      const rawName = item.vendor_name || '';
+      const normalizedKey = rawName.trim().toLowerCase() || 'unassigned_vendor';
+      
+      if (!acc[normalizedKey]) {
+        // First occurrence - set initial display name
+        const displayName = normalizedKey === 'unassigned_vendor' ? 'Unassigned Vendor' : rawName.trim();
+        acc[normalizedKey] = {
+          displayName: displayName,
+          items: []
+        };
+      } else {
+        // Subsequent occurrences - prefer capitalized versions for display
+        const currentDisplay = acc[normalizedKey].displayName;
+        const newTrimmed = rawName.trim();
+        // If current is lowercase and new has uppercase, prefer the new one
+        if (currentDisplay !== 'Unassigned Vendor' && 
+            currentDisplay[0] === currentDisplay[0].toLowerCase() && 
+            newTrimmed[0] === newTrimmed[0].toUpperCase()) {
+          acc[normalizedKey].displayName = newTrimmed;
+        }
+      }
+      
+      acc[normalizedKey].items.push(item);
+      return acc;
+    }, {});
+    
+    const groupedByVendor = Object.entries(vendorMap).reduce((acc, [key, data]) => {
+      acc[data.displayName] = data.items;
       return acc;
     }, {});
 
@@ -3126,10 +3179,12 @@ const App = () => {
         window.XLSX.writeFile(wb, `Procurement-${new Date().toISOString().split('T')[0]}.xlsx`);
         
         debug('✓ Procurement list exported to Excel');
-        alert('Excel file downloaded!');
+        setNotification({ type: 'success', message: 'Excel file downloaded!' });
+        setTimeout(() => setNotification(null), 3000);
       } catch (error) {
         debug(`Excel export error: ${error.message}`);
-        alert('Export failed. See debug log.');
+        setNotification({ type: 'error', message: 'Export failed. See debug log.' });
+        setTimeout(() => setNotification(null), 3000);
       }
     };
 
