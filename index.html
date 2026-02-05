@@ -147,6 +147,431 @@ const loadJsPDF = async () => {
   });
 };
 
+
+// ============================================================================
+// CATEGORY NORMALIZATION AND REGIONAL TERMINOLOGY SYSTEM
+// ============================================================================
+// This module provides:
+// 1. Legacy → Canonical category key mapping (for backward compatibility)
+// 2. Regional terminology mapping (canonical key → region → display label)
+// 3. Helper functions for normalization and display
+
+// ----------------------------------------------------------------------------
+// LEGACY TO CANONICAL MAPPING
+// ----------------------------------------------------------------------------
+// Maps old category keys to new canonical keys
+// This ensures backward compatibility with existing data
+// DO NOT modify this mapping without careful consideration
+const LEGACY_TO_CANONICAL_MAP = {
+  // Legacy key → Canonical key
+  'mixer': 'basin_faucet',                    // Basin mixer → Basin faucet
+  'wc': 'wc_pan',                             // WC → WC pan
+  'hand_shower_hose': 'shower_hose',          // Hand shower hose → Shower hose
+  'hand_shower_outlet': 'wall_outlet',        // Hand shower outlet → Wall outlet
+  'hand_shower_rail': 'shower_rail',          // Hand shower rail → Shower rail
+  'diverter_concealed_body': 'concealed_body',// Diverter concealed body → Concealed body
+  'shower_panel': 'shared_plumbing_component',// Shower panel → Shared component (no direct canonical match)
+  'geyser': 'water_heater',                   // Geyser → Water heater
+  'shower_drain': 'floor_drain',              // Shower drain → Floor drain
+  'floor_drain_wc': 'floor_drain',            // Floor drain WC → Floor drain
+  'hand_towel_rail': 'towel_rail',            // Hand towel rail → Towel rail
+  'towel_rack': 'towel_rail',                 // Towel rack → Towel rail
+  'accessory': 'shared_plumbing_component',   // Accessory → Shared component
+  'drain': 'floor_drain',                     // Drain → Floor drain
+  'wall_tiles': 'shared_plumbing_component',  // Wall tiles → Shared component (tiles not in canonical)
+  'feature_wall_tiles': 'shared_plumbing_component', // Feature wall tiles → Shared component
+  'floor_tiles': 'shared_plumbing_component', // Floor tiles → Shared component
+  
+  // Keys that are already canonical (map to themselves for completeness)
+  'basin': 'basin',
+  'concealed_body': 'concealed_body',
+  'health_faucet': 'health_faucet',
+  'hand_shower': 'hand_shower',
+  'overhead_shower': 'overhead_shower',
+  'shower_arm': 'shower_arm',
+  'diverter': 'diverter',
+  'toilet_paper_holder': 'toilet_paper_holder',
+  'robe_hook': 'robe_hook',
+  
+  // Additional canonical keys (for new categories)
+  'angle_valve': 'angle_valve',
+  'stop_cock': 'stop_cock',
+  'mixing_valve': 'mixing_valve',
+  'flush_valve': 'flush_valve',
+  'cistern': 'cistern',
+  'wall_mounted_faucet': 'wall_mounted_faucet',
+  'deck_mounted_faucet': 'deck_mounted_faucet',
+  'shower_mixer': 'shower_mixer',
+  'bath_filler': 'bath_filler',
+  'body_jet': 'body_jet',
+  'wc_pan': 'wc_pan',
+  'wall_hung_wc_frame': 'wall_hung_wc_frame',
+  'urinal': 'urinal',
+  'bathtub': 'bathtub',
+  'water_heater': 'water_heater',
+  'instant_heater': 'instant_heater',
+  'solar_heater': 'solar_heater',
+  'floor_drain': 'floor_drain',
+  'bottle_trap': 'bottle_trap',
+  'p_trap': 'p_trap',
+  's_trap': 's_trap',
+  'waste_coupling': 'waste_coupling',
+  'grating': 'grating',
+  'towel_ring': 'towel_ring',
+  'soap_dispenser': 'soap_dispenser',
+  'shelf': 'shelf',
+  'shared_plumbing_component': 'shared_plumbing_component'
+};
+
+// ----------------------------------------------------------------------------
+// REGIONAL TERMINOLOGY MAPPING
+// ----------------------------------------------------------------------------
+// Maps canonical keys to region-specific display labels
+// Structure: { canonicalKey: { region: label, ... }, ... }
+const REGIONAL_TERMINOLOGY = {
+  // Water Supply & Control
+  'angle_valve': {
+    'SouthAsia': 'Angle Valve',
+    'default': 'Shut-off Valve / Isolation Valve'
+  },
+  'stop_cock': {
+    'SouthAsia': 'Stop Cock',
+    'default': 'Main Shut-off Valve'
+  },
+  'wall_outlet': {
+    'SouthAsia': 'Wall Outlet',
+    'default': 'Wall Supply'
+  },
+  'concealed_body': {
+    'SouthAsia': 'Concealed Body',
+    'default': 'Concealed Valve Body'
+  },
+  'diverter': {
+    'SouthAsia': 'Diverter',
+    'default': 'Flow Diverter'
+  },
+  'mixing_valve': {
+    'SouthAsia': 'Mixing Valve',
+    'default': 'Thermostatic Mixer'
+  },
+  'flush_valve': {
+    'SouthAsia': 'Flush Valve',
+    'default': 'Flush Mechanism'
+  },
+  'cistern': {
+    'SouthAsia': 'Cistern',
+    'default': 'Toilet Tank'
+  },
+  
+  // Taps & Controls
+  'basin_faucet': {
+    'SouthAsia': 'Basin Mixer',
+    'default': 'Basin Faucet / Tap'
+  },
+  'wall_mounted_faucet': {
+    'SouthAsia': 'Wall Mounted Mixer',
+    'default': 'Wall Mount Faucet'
+  },
+  'deck_mounted_faucet': {
+    'SouthAsia': 'Deck Mounted Mixer',
+    'default': 'Deck Mount Faucet'
+  },
+  'shower_mixer': {
+    'SouthAsia': 'Shower Mixer',
+    'default': 'Shower Valve'
+  },
+  'bath_filler': {
+    'SouthAsia': 'Bath Spout',
+    'default': 'Bath Filler / Tub Spout'
+  },
+  'health_faucet': {
+    'SouthAsia': 'Health Faucet',
+    'default': 'Bidet Spray / Shattaf'
+  },
+  
+  // Shower Components
+  'overhead_shower': {
+    'SouthAsia': 'Overhead Shower',
+    'default': 'Rain Shower / Shower Head'
+  },
+  'hand_shower': {
+    'SouthAsia': 'Hand Shower',
+    'default': 'Hand-held Shower'
+  },
+  'shower_arm': {
+    'SouthAsia': 'Shower Arm',
+    'default': 'Shower Extension Arm'
+  },
+  'shower_rail': {
+    'SouthAsia': 'Shower Rail',
+    'default': 'Slide Bar / Shower Rail'
+  },
+  'body_jet': {
+    'SouthAsia': 'Body Jet',
+    'default': 'Body Spray'
+  },
+  'shower_hose': {
+    'SouthAsia': 'Flexible Hose',
+    'default': 'Shower Hose'
+  },
+  
+  // Sanitary Fixtures
+  'wc_pan': {
+    'SouthAsia': 'WC / Water Closet',
+    'default': 'Toilet / Commode'
+  },
+  'wall_hung_wc_frame': {
+    'SouthAsia': 'Concealed Cistern Frame',
+    'default': 'Wall-hung WC Frame'
+  },
+  'basin': {
+    'SouthAsia': 'Wash Basin',
+    'default': 'Sink / Washbasin'
+  },
+  'urinal': {
+    'SouthAsia': 'Urinal',
+    'default': 'Urinal'
+  },
+  'bathtub': {
+    'SouthAsia': 'Bath Tub',
+    'default': 'Bathtub / Tub'
+  },
+  
+  // Water Heating
+  'water_heater': {
+    'SouthAsia': 'Geyser',
+    'default': 'Water Heater'
+  },
+  'instant_heater': {
+    'SouthAsia': 'Instant Geyser',
+    'default': 'Instant Water Heater / Tankless Heater'
+  },
+  'solar_heater': {
+    'SouthAsia': 'Solar Water Heater',
+    'default': 'Solar Water Heater'
+  },
+  
+  // Drainage
+  'floor_drain': {
+    'SouthAsia': 'Floor Drain / Nahani Trap',
+    'default': 'Floor Drain'
+  },
+  'bottle_trap': {
+    'SouthAsia': 'Bottle Trap',
+    'default': 'Bottle Trap / P-trap'
+  },
+  'p_trap': {
+    'SouthAsia': 'P Trap',
+    'default': 'P-trap'
+  },
+  's_trap': {
+    'SouthAsia': 'S Trap',
+    'default': 'S-trap'
+  },
+  'waste_coupling': {
+    'SouthAsia': 'Waste Coupling',
+    'default': 'Drain Coupling'
+  },
+  'grating': {
+    'SouthAsia': 'Floor Grating',
+    'default': 'Drain Grating / Grate'
+  },
+  
+  // Accessories
+  'towel_rail': {
+    'SouthAsia': 'Towel Rail / Rod',
+    'default': 'Towel Bar / Rail'
+  },
+  'towel_ring': {
+    'SouthAsia': 'Towel Ring',
+    'default': 'Towel Ring / Holder'
+  },
+  'soap_dispenser': {
+    'SouthAsia': 'Soap Dispenser',
+    'default': 'Soap Dispenser'
+  },
+  'robe_hook': {
+    'SouthAsia': 'Robe Hook',
+    'default': 'Towel Hook / Robe Hook'
+  },
+  'toilet_paper_holder': {
+    'SouthAsia': 'Toilet Paper Holder',
+    'default': 'Toilet Roll Holder'
+  },
+  'shelf': {
+    'SouthAsia': 'Glass Shelf',
+    'default': 'Shelf / Glass Shelf'
+  },
+  
+  // Shared/General
+  'shared_plumbing_component': {
+    'SouthAsia': 'Plumbing Component',
+    'default': 'Plumbing Component'
+  }
+};
+
+// ----------------------------------------------------------------------------
+// CURRENCY TO REGION MAPPING
+// ----------------------------------------------------------------------------
+const CURRENCY_TO_REGION = {
+  'USD': 'NorthAmerica',
+  'CAD': 'NorthAmerica',
+  'GBP': 'UKCommonwealth',
+  'AUD': 'UKCommonwealth',
+  'SGD': 'UKCommonwealth',
+  'INR': 'SouthAsia',
+  'AED': 'SouthAsia',
+  'EUR': 'EuropeNeutral'
+};
+
+// ----------------------------------------------------------------------------
+// CANONICAL CATEGORY DEFINITIONS
+// ----------------------------------------------------------------------------
+// These are the canonical internal keys that must be used in runtime state
+const CANONICAL_CATEGORIES = [
+  // Water Supply & Control
+  'angle_valve',
+  'stop_cock',
+  'wall_outlet',
+  'concealed_body',
+  'diverter',
+  'mixing_valve',
+  'flush_valve',
+  'cistern',
+  
+  // Taps & Controls
+  'basin_faucet',
+  'wall_mounted_faucet',
+  'deck_mounted_faucet',
+  'shower_mixer',
+  'bath_filler',
+  'health_faucet',
+  
+  // Shower Components
+  'overhead_shower',
+  'hand_shower',
+  'shower_arm',
+  'shower_rail',
+  'body_jet',
+  'shower_hose',
+  
+  // Sanitary Fixtures
+  'wc_pan',
+  'wall_hung_wc_frame',
+  'basin',
+  'urinal',
+  'bathtub',
+  
+  // Water Heating
+  'water_heater',
+  'instant_heater',
+  'solar_heater',
+  
+  // Drainage
+  'floor_drain',
+  'bottle_trap',
+  'p_trap',
+  's_trap',
+  'waste_coupling',
+  'grating',
+  
+  // Accessories
+  'towel_rail',
+  'towel_ring',
+  'soap_dispenser',
+  'robe_hook',
+  'toilet_paper_holder',
+  'shelf',
+  
+  // Shared
+  'shared_plumbing_component'
+];
+
+// ----------------------------------------------------------------------------
+// HELPER FUNCTIONS
+// ----------------------------------------------------------------------------
+
+/**
+ * Normalizes a legacy category key to its canonical equivalent
+ * @param {string} legacyKey - The legacy category key
+ * @returns {string} The canonical category key
+ */
+function normalizeCategoryKey(legacyKey) {
+  if (!legacyKey) return 'shared_plumbing_component'; // Default fallback
+  
+  // Check if it's in the legacy map
+  if (LEGACY_TO_CANONICAL_MAP[legacyKey]) {
+    return LEGACY_TO_CANONICAL_MAP[legacyKey];
+  }
+  
+  // If not in map, assume it's already canonical or unknown
+  // Check if it's a canonical key
+  if (CANONICAL_CATEGORIES.includes(legacyKey)) {
+    return legacyKey;
+  }
+  
+  // Unknown key - map to shared component and log warning
+  console.warn(`Unknown category key '${legacyKey}' mapped to 'shared_plumbing_component'`);
+  return 'shared_plumbing_component';
+}
+
+/**
+ * Gets the region based on currency code
+ * @param {string} currencyCode - The currency code (e.g., 'USD', 'INR')
+ * @returns {string} The region name
+ */
+function getCurrencyRegion(currencyCode) {
+  return CURRENCY_TO_REGION[currencyCode] || 'default';
+}
+
+/**
+ * Gets the display label for a canonical category key
+ * @param {string} canonicalKey - The canonical category key
+ * @param {string} currencyCode - The currency code (determines region)
+ * @returns {string} The region-appropriate display label
+ */
+function getCategoryDisplayLabel(canonicalKey, currencyCode) {
+  if (!canonicalKey) return 'Uncategorized';
+  
+  // Get the region from currency
+  const region = getCurrencyRegion(currencyCode);
+  
+  // Get the terminology for this canonical key
+  const terminology = REGIONAL_TERMINOLOGY[canonicalKey];
+  
+  if (terminology) {
+    // Return region-specific label or default
+    return terminology[region] || terminology['default'] || formatKeyToLabel(canonicalKey);
+  }
+  
+  // Fallback: format the key nicely
+  return formatKeyToLabel(canonicalKey);
+}
+
+/**
+ * Formats a category key into a readable label (fallback)
+ * @param {string} key - The category key
+ * @returns {string} Formatted label
+ */
+function formatKeyToLabel(key) {
+  return key.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+}
+
+// Export for use in the application
+    LEGACY_TO_CANONICAL_MAP,
+    REGIONAL_TERMINOLOGY,
+    CURRENCY_TO_REGION,
+    CANONICAL_CATEGORIES,
+    normalizeCategoryKey,
+    getCurrencyRegion,
+    getCategoryDisplayLabel,
+    formatKeyToLabel
+  };
+}
+
+
 const App = () => {
   const [view, setView] = React.useState('database');
   const [items, setItems] = React.useState([]);
@@ -192,7 +617,7 @@ const App = () => {
   const [visibleColumns, setVisibleColumns] = React.useState({ bathroom: true, option: true, category: true }); // Procurement column visibility
   const [sortConfig, setSortConfig] = React.useState({ column: null, direction: 'asc' }); // Database table sorting
 
-  const defaultCats = ['basin', 'wc', 'hand_shower', 'hand_shower_hose', 'hand_shower_outlet', 'hand_shower_rail', 'overhead_shower', 'mixer', 'concealed_body', 'diverter', 'diverter_concealed_body', 'shower_panel', 'geyser', 'shower_drain', 'floor_drain_wc', 'toilet_paper_holder', 'hand_towel_rail', 'towel_rack', 'robe_hook', 'accessory', 'drain', 'health_faucet', 'wall_tiles', 'feature_wall_tiles', 'floor_tiles'];
+  const defaultCats = CANONICAL_CATEGORIES; // Use canonical categories for new items
   
   // Combine default categories with custom ones
   const cats = React.useMemo(() => {
@@ -210,41 +635,7 @@ const App = () => {
       return 'Uncategorized';
     }
     
-    const categoryLabels = {
-      'basin': 'Basin',
-      'mixer': 'Basin Mixer',
-      'concealed_body': 'Concealed Body',
-      'wc': 'WC',
-      'health_faucet': 'Health Faucet',
-      'hand_shower': 'Hand Shower',
-      'hand_shower_hose': 'Hand Shower Hose',
-      'hand_shower_outlet': 'Hand Shower Wall Outlet',
-      'hand_shower_rail': 'Hand Shower Rail',
-      'overhead_shower': 'Overhead Shower',
-      'shower_arm': 'Shower Arm',
-      'diverter': 'Diverter',
-      'diverter_concealed_body': 'Diverter Concealed Body',
-      'shower_panel': 'Shower Panel',
-      'geyser': 'Geyser',
-      'shower_drain': 'Shower Drain',
-      'floor_drain_wc': 'Floor Drain near WC',
-      'toilet_paper_holder': 'Toilet Paper Holder',
-      'hand_towel_rail': 'Hand Towel Rail',
-      'towel_rack': 'Towel Rack',
-      'robe_hook': 'Robe Hook',
-      'drain': 'Drain',
-      'wall_tiles': 'Wall Tiles',
-      'feature_wall_tiles': 'Feature Wall Tiles',
-      'floor_tiles': 'Floor Tiles',
-      'accessory': 'Accessory'
-    };
-    
-    // Check if we have a predefined label
-    if (categoryLabels[categoryKey]) {
-      return categoryLabels[categoryKey];
-    }
-    
-    // Check custom categories
+    // First, check if this is a custom category
     const customCat = customCategories.find(cat => {
       const catName = typeof cat === 'string' ? cat : cat.name;
       const catKey = catName.toLowerCase().replace(/\s+/g, '_');
@@ -255,11 +646,9 @@ const App = () => {
       return typeof customCat === 'string' ? customCat : customCat.name;
     }
     
-    // Fallback: format the key (replace underscores with spaces and capitalize)
-    return categoryKey.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  }, [customCategories]);
+    // For canonical categories, use regional terminology
+    return getCategoryDisplayLabel(categoryKey, currencyCode);
+  }, [customCategories, currencyCode]);
 
   const debug = (msg) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -566,7 +955,15 @@ const App = () => {
     delete normalized.relatedItems;
     delete normalized.imageUrl;
     
-    return normalized;
+    
+    // CATEGORY NORMALIZATION
+    // Normalize legacy category keys to canonical keys
+    // This happens ONLY in memory during load - never written back to storage
+    if (item.category) {
+      normalized.category = normalizeCategoryKey(item.category);
+    }
+    
+        return normalized;
   };
 
   const loadFromStorage = async () => {
